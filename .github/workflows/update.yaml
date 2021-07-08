@@ -1,0 +1,35 @@
+name: Update
+
+on:
+  schedule:
+    - cron: '30 2 * * *'
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: actions/checkout@v2
+        with:
+          repository: 'c4dt/arti-rest'
+
+      - name: Fetch tor directory
+        id: fetch_tor_dir
+        run: |
+          echo ${{ secrets.AUTHORITY }} |
+            base64 -d |
+            tar -C tools -xz
+          cd tools
+          make
+          tar -C directory-cache -czf directory-cache.tgz .
+          cd ..
+          date >> body.md
+          echo "::set-output name=DATE::$(date +%Y-%m-%d)"
+
+      - uses: ncipollo/release-action@v1
+        with:
+          artifacts: "tools/directory-cache.tgz"
+          bodyFile: "body.md"
+          tag: ${{ steps.fetch_tor_dir.outputs.DATE }}
+          token: ${{ secrets.GITHUB_TOKEN }}

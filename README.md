@@ -20,3 +20,17 @@ This will print out a Base64-encoded string that you'll need to copy into the
 `AUTHORITY` secret in the `lightarti-directory` repository.
 You will also have to copy the `DIR_AUTH_PASSWORD` into the `DIR_AUTH_PASSWORD`
 secret in the `lightarti-directory` repository.
+
+# Contributors
+
+`lightarti-directory` is maintained by the [Center for Digital Trust](https://c4dt.org/). The following people contributed to the implementation of `lightarti-rest`:
+
+- Linus Gasser, C4DT
+- Valérian Rousset, C4DT
+- Christian Grigis, C4DT
+- Laurent Girod, SPRING Lab, EPFL
+
+Analysis and design by:
+
+- Wouter Lueks, SPRING Lab, EPFL
+- Carmela Troncoso, SPRING Lab, EPFL

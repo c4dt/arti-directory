@@ -20,6 +20,7 @@ jobs:
         env:
           DIR_AUTH_PASSWORD: ${{ secrets.DIR_AUTH_PASSWORD }}
         run: |
+          sudo apt install tor
           echo ${{ secrets.AUTHORITY }} |
             base64 -d |
             tar -C tools -xj

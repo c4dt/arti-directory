@@ -3,6 +3,7 @@ name: Update
 on:
   schedule:
     - cron: '30 2 * * *'
+  push:
 
 jobs:
   update:
@@ -16,12 +17,14 @@ jobs:
 
       - name: Fetch tor directory
         id: fetch_tor_dir
+        env:
+          DIR_AUTH_PASSWORD: ${{ secrets.DIR_AUTH_PASSWORD }}
         run: |
           echo ${{ secrets.AUTHORITY }} |
             base64 -d |
-            tar -C tools -xz
+            tar -C tools -xj
           cd tools
-          make
+          make dirinfo
           tar -C directory-cache -czf directory-cache.tgz .
           cd ..
           date >> body.md

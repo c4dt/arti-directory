@@ -27,6 +27,7 @@ jobs:
           cd tools
           make dirinfo
           tar -C directory-cache -czf directory-cache.tgz .
+          zip -rj directory-cache.zip directory-cache/
           cd ..
           date >> body.md
           echo "::set-output name=DATE::$(date +%Y-%m-%d)"

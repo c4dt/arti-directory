@@ -3,7 +3,6 @@ name: Update
 on:
   schedule:
     - cron: '30 2 * * *'
-  push:
 
 jobs:
   update:
@@ -15,26 +14,47 @@ jobs:
         with:
           repository: 'c4dt/lightarti-rest'
 
+      # Dummy upload so that the following download succeeds, even for the
+      # first run. This will not override the artifact
+      - uses: actions/upload-artifact@v2
+        with:
+          name: dirinfo
+          path: README.md
+
+      - uses: actions/download-artifact@v2
+        with:
+          name: dirinfo
+
+      - uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
       - name: Fetch tor directory
         id: fetch_tor_dir
         env:
           DIR_AUTH_PASSWORD: ${{ secrets.DIR_AUTH_PASSWORD }}
         run: |
-          sudo apt install tor
+          sudo apt install -y tor
           echo ${{ secrets.AUTHORITY }} |
             base64 -d |
             tar -C tools -xj
           cd tools
-          make dirinfo
+          make update_cache_churn
           tar -C directory-cache -czf directory-cache.tgz .
           zip -rj directory-cache.zip directory-cache/
           cd ..
           date >> body.md
           echo "::set-output name=DATE::$(date +%Y-%m-%d)"
 
+      - uses: actions/upload-artifact@v2
+        with:
+          name: dirinfo
+          path: tools/directory-cache
+
       - uses: ncipollo/release-action@v1
         with:
-          artifacts: "tools/directory-cache.*"
+          artifacts: "tools/directory-cache.*, tools/directory-cache/churn.txt"
           bodyFile: "body.md"
           tag: ${{ steps.fetch_tor_dir.outputs.DATE }}
           token: ${{ secrets.GITHUB_TOKEN }}
+          allowUpdates: true

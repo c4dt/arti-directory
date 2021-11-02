@@ -14,16 +14,14 @@ jobs:
         with:
           repository: 'c4dt/lightarti-rest'
 
-      # Dummy upload so that the following download succeeds, even for the
-      # first run. This will not override the artifact
-      - uses: actions/upload-artifact@v2
+      # Download latest release to create a churn.txt. This will fail on a new repo,
+      # as it won't have a latest release available the first time. So you'll have to
+      # comment this out the first time you run this in a new repo.
+      - uses: robinraju/release-downloader@v1.2
         with:
-          name: dirinfo
-          path: README.md
-
-      - uses: actions/download-artifact@v2
-        with:
-          name: dirinfo
+          repository: "c4dt/lightarti-directory"
+          latest: true
+          fileName: "directory-cache.tgz"
 
       - uses: actions/setup-python@v2
         with:
@@ -37,19 +35,16 @@ jobs:
           sudo apt install -y tor
           echo ${{ secrets.AUTHORITY }} |
             base64 -d |
-            tar -C tools -xj
+            tar -C tools -xjv
           cd tools
+          mkdir -p directory-cache
+          tar xf ../directory-cache.tgz -C directory-cache
           make update_cache_churn
           tar -C directory-cache -czf directory-cache.tgz .
           zip -rj directory-cache.zip directory-cache/
           cd ..
           date >> body.md
           echo "::set-output name=DATE::$(date +%Y-%m-%d)"
-
-      - uses: actions/upload-artifact@v2
-        with:
-          name: dirinfo
-          path: tools/directory-cache
 
       - uses: ncipollo/release-action@v1
         with:

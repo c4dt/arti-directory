@@ -1,4 +1,4 @@
-.PHONY: churn clean clean_auth clean_cache secrets_authority update_cache_churn
+.PHONY: churn clean clean_auth clean_cache clean_venv secrets_authority update_cache_churn
 
 AUTH_DIR=authority-private
 AUTH_ID=$(AUTH_DIR)/authority_identity_key
@@ -11,19 +11,20 @@ CACHE_AUTH=$(CACHE_DIR)/authority.txt
 CACHE_CONS=$(CACHE_DIR)/consensus.txt
 CACHE_MICRO=$(CACHE_DIR)/microdescriptors.txt
 CACHE_CHURN=$(CACHE_DIR)/churn.txt
+VENV=.venv
 
 all: update_cache
 
 clean_auth:
 	rm -rf $(AUTH_DIR)
 
-authority: .venv $(AUTH_ID) $(AUTH_SIGN) $(AUTH_CERT) $(AUTH_AUTH)
+authority: $(VENV) $(AUTH_ID) $(AUTH_SIGN) $(AUTH_CERT) $(AUTH_AUTH)
 $(AUTH_DIR) $(AUTH_ID) $(AUTH_SIGN) $(AUTH_CERT) $(AUTH_AUTH):
 ifeq ($(DIR_AUTH_PASSWORD), )
 	$(error Environment variable DIR_AUTH_PASSWORD is undefined or invalid.)
 endif
 	mkdir -p $(AUTH_DIR)
-	. .venv/bin/activate && ./gen_fresh_dirinfo.py generate-certificate \
+	. $(VENV)/bin/activate && ./gen_fresh_dirinfo.py generate-certificate \
 		--authority-identity-key $(AUTH_ID) \
 		--authority-signing-key $(AUTH_SIGN) \
 		--authority-certificate $(AUTH_CERT) \
@@ -39,22 +40,25 @@ $(CACHE_CERT) $(CACHE_AUTH) $(CACHE_CONS) $(CACHE_MICRO):
 	$(MAKE) authority
 	mkdir -p $(CACHE_DIR)
 	cp $(AUTH_CERT) $(AUTH_AUTH) $(CACHE_DIR)
-	. .venv/bin/activate && ./gen_fresh_dirinfo.py generate-dirinfo \
+	. $(VENV)/bin/activate && ./gen_fresh_dirinfo.py generate-dirinfo \
 		--authority-signing-key $(AUTH_SIGN) \
 		--authority-certificate $(CACHE_CERT) \
 		--consensus $(CACHE_CONS) \
 		--microdescriptors $(CACHE_MICRO)
 
 churn: cache
-	. .venv/bin/activate && ./gen_fresh_dirinfo.py compute-churn \
+	. $(VENV)/bin/activate && ./gen_fresh_dirinfo.py compute-churn \
 		--consensus $(CACHE_CONS) \
 		--churn $(CACHE_CHURN)
 
-.venv: requirements.txt
-	python3 -m venv .venv
-	. .venv/bin/activate &&	pip3 install -qr requirements.txt
+$(VENV): requirements.txt
+	python3 -m venv $(VENV)
+	. $(VENV)/bin/activate && pip3 install -qr requirements.txt
 
-clean: clean_cache clean_auth
+clean_venv:
+	rm -rf $(VENV)
+
+clean: clean_cache clean_auth clean_venv
 
 secrets_authority: $(AUTH_DIR)
 	tar cjf auth.tgz $(AUTH_DIR)

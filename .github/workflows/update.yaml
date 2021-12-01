@@ -3,16 +3,13 @@ name: Update
 on:
   schedule:
     - cron: '30 2 * * *'
+  workflow_dispatch:
 
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-
-      - uses: actions/checkout@v2
-        with:
-          repository: 'c4dt/lightarti-rest'
 
       # Download latest release to create a churn.txt. This will fail on a new repo,
       # as it won't have a latest release available the first time. So you'll have to

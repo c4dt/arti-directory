@@ -1,4 +1,4 @@
-.PHONY: churn clean clean_auth clean_cache secrets_authority update_cache_churn
+.PHONY: churn clean clean_auth clean_cache clean_venv secrets_authority update_cache_churn
 
 AUTH_DIR=authority-private
 AUTH_ID=$(AUTH_DIR)/authority_identity_key
@@ -53,7 +53,7 @@ churn: cache
 
 $(VENV): requirements.txt
 	python3 -m venv $(VENV)
-	. $(VENV)/bin/activate &&	pip3 install -qr requirements.txt
+	. $(VENV)/bin/activate && pip3 install -qr requirements.txt
 
 clean_venv:
 	rm -rf $(VENV)

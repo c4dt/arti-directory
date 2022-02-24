@@ -7,7 +7,7 @@ The scripts in this directory pick reliable nodes so that ideally the consensus 
 The tool provides three functions:
 
 1. Setting up a custom directory authority. The keys of this authority are used to sign the smaller custom consensus files. This step only needs to be run once.
-2. Generating a new custom consensus. Based on the latest consensus information, the script produces a smaller consensus of reliable nodes.  A new custom consensus should ideally be generated at least once a day. Generating a new custom consensus requires the keys from the previous step.
+2. Generating a new custom consensus. Based on the latest consensus information, the script produces a smaller consensus of reliable nodes. A new custom consensus should ideally be generated at least once a day. Generating a new custom consensus requires the keys from the previous step.
 3. Generating a churn file. As a custom consensus ages, some nodes may no longer be available. To increase efficiency, lightarti-rest can take as input a very small churn file that lists available nodes. A churn file is generated with respect to a specific custom consensus. Ideally it is updated every hour.
 
 We describe these in more detail below.
@@ -17,7 +17,6 @@ The size of a consensus retrieved from Tor authorities in microconsensus format 
 The size of a shortened consensus will depend on the number of relay we decide to include, if we keep the default values (120 routers), it will have a size of about 45 KB.
 
 The size of the churn file will increase over time, as more relays become unreachable. Each unreachable relay increase the size of the churn file by 41 bytes (40 bytes for the fingerprint of the relay plus 1 byte for the new line). So typically, its size will be less 1 KB.
-
 
 ## Requirements
 
@@ -93,7 +92,7 @@ python3 gen_fresh_dirinfo.py generate-certificate \
   --authority-identity-key authority_identity_key \
   --authority-signing-key authority_signing_key \
   --authority-certificate certificate.txt \
-  --authority-v3ident authority.txt \
+  --authority-v3ident authority.json \
   --authority-name spring \
   --certificate-validity-months 12
 ```
@@ -110,11 +109,10 @@ Which creates 4 files:
   Lightarti-rest library. (default: `certificate.txt`)
 - A small file containing the v3ident identifier of the authority which
   you will need to provide to the Lightarti-rest library. (default:
-  `authority.txt`)
+  `authority.json`)
 
 **Note:** If the files already exist when running the script, it will
 renew the certificate instead of regenerating a new identity key.
-
 
 ### Generate Directory Information
 
@@ -141,7 +139,6 @@ reliable advertised routers in the Tor network in the form of two files:
 - A file containing a list of microdescriptors, each router described
   in the consensus is described by one microdescriptor. (default:
   `microdescriptors.txt`)
-
 
 ## Generate Churn
 

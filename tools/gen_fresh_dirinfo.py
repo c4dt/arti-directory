@@ -6,6 +6,7 @@
 Script to produce data to pass to lightarti-rest.
 """
 
+import json
 import logging
 import re
 import sys
@@ -856,9 +857,9 @@ def generate_certificate(
     authority_certificate_raw = authority_certificate_path.read_bytes()
     authority_certificate = KeyCertificate(authority_certificate_raw)
 
-    v3ident = f"{authority_name} {authority_certificate.fingerprint}".encode("ascii")
+    v3ident = json.dumps({"name": authority_name, "v3ident": authority_certificate.fingerprint})
 
-    authority_v3ident_path.write_bytes(v3ident)
+    authority_v3ident_path.write_text(v3ident)
 
 
 def generate_customized_consensus(
@@ -1089,7 +1090,7 @@ def main(program: str, arguments: List[str]) -> None:
         "--authority-v3ident",
         help="File containing nickname and v3ident of the authority.",
         type=Path,
-        default="authority.txt"
+        default="authority.json"
     )
     parser_certificate.add_argument(
         "--authority-name",

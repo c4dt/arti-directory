@@ -37,7 +37,7 @@ DIRNAME_AUTHORITY_PUBLIC = "public"
 
 FILENAME_AUTHORITY_KEY_ID = "authority_identity_key"
 FILENAME_AUTHORITY_KEY_SIGNATURE = "authority_signing_key"
-FILENAME_AUTHORITY_FINGERPRINT = "authority.txt"
+FILENAME_AUTHORITY_FINGERPRINT = "authority.json"
 FILENAME_CERTIFICATE = "certificate.txt"
 FILENAME_CHURN = "churn.txt"
 FILENAME_CONSENSUS = "consensus.txt"

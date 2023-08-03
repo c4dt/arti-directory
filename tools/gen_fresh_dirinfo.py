@@ -130,7 +130,7 @@ EXIT_FLAG_RE = re.compile(b"(s.*) Exit(.+)", re.MULTILINE)
 GUARD_FLAG_RE = re.compile(b"(s.+)Guard (.+)", re.MULTILINE)
 
 # Maximum ratio of churned routers in a customized consensus.
-CHURN_THRESHOLD_RATIO = 1/6
+CHURN_THRESHOLD_RATIO = 1 / 6
 
 
 Address = Tuple[str, int, bool]
@@ -200,9 +200,8 @@ def is_orport_used(router: RouterStatusEntryMicroV3, port: int) -> bool:
 
 
 def is_address_port_changed(
-        addresses_ports_origin: List[Address],
-        addresses_ports_new: List[Address]
-    ) -> bool:
+    addresses_ports_origin: List[Address], addresses_ports_new: List[Address]
+) -> bool:
     """
     Check if the address or the port changed between the addresses of two OR routers.
 
@@ -236,14 +235,14 @@ def terminate_process(process: Popen) -> None:
 
 
 def call_tor_gencert(
-        password: bytes,
-        create_new_identity: bool,
-        reuse_signing_key: bool,
-        identity_key_file: Path,
-        signing_key_file: str,
-        certificate_file: str,
-        lifetime_in_months: int,
-    ) -> None:
+    password: bytes,
+    create_new_identity: bool,
+    reuse_signing_key: bool,
+    identity_key_file: Path,
+    signing_key_file: str,
+    certificate_file: str,
+    lifetime_in_months: int,
+) -> None:
     """
     Call the tor-gencert command to generate key pairs and certificate.
 
@@ -260,11 +259,16 @@ def call_tor_gencert(
 
     args = [
         "tor-gencert",
-        "-i", str(identity_key_file),
-        "-s", str(signing_key_file),
-        "-c", str(certificate_file),
-        "-m", f"{lifetime_in_months}",
-        "--passphrase-fd", "0"
+        "-i",
+        str(identity_key_file),
+        "-s",
+        str(signing_key_file),
+        "-c",
+        str(certificate_file),
+        "-m",
+        f"{lifetime_in_months}",
+        "--passphrase-fd",
+        "0",
     ]
 
     if create_new_identity:
@@ -297,13 +301,13 @@ def fetch_authorities() -> Dict[str, Authority]:
     :return: dictionary matching the name of the authorities to their object
     """
     authorities = Authority.from_cache()
-    signing_authorities = {name: auth for name, auth in authorities.items() if auth.v3ident}
+    signing_authorities = {
+        name: auth for name, auth in authorities.items() if auth.v3ident
+    }
     return signing_authorities
 
 
-def fetch_vote(
-        authority: Authority
-    ) -> NetworkStatusDocumentV3:
+def fetch_vote(authority: Authority) -> NetworkStatusDocumentV3:
     """
     Fetch the latest vote from the authority.
 
@@ -318,9 +322,7 @@ def fetch_vote(
     downloader = DescriptorDownloader()
 
     vote = downloader.get_vote(
-        authority,
-        document_handler=DocumentHandler.DOCUMENT,
-        timeout=10
+        authority, document_handler=DocumentHandler.DOCUMENT, timeout=10
     ).run()[0]
 
     if not isinstance(vote, NetworkStatusDocumentV3):
@@ -353,8 +355,8 @@ def fetch_latest_consensus() -> NetworkStatusDocumentV3:
 
 
 def fetch_microdescriptors(
-        routers: List[RouterStatusEntryMicroV3]
-    ) -> List[Microdescriptor]:
+    routers: List[RouterStatusEntryMicroV3],
+) -> List[Microdescriptor]:
     """
     Fetch the microdescriptors described in the entries.
 
@@ -373,14 +375,15 @@ def fetch_microdescriptors(
     for bucket in zip_longest(*buckets):
         digests = [h for h in bucket if h is not None]
         microdescriptors_bucket = downloader.get_microdescriptors(
-            hashes=digests,
-            validate=True
+            hashes=digests, validate=True
         ).run()
 
         digests_set = set(digests)
         for microdescriptor in microdescriptors_bucket:
             if not isinstance(microdescriptor, Microdescriptor):
-                raise ValueError(f"Unexpected microdescriptor format {type(microdescriptor)}")
+                raise ValueError(
+                    f"Unexpected microdescriptor format {type(microdescriptor)}"
+                )
 
             if microdescriptor.digest() not in digests_set:
                 raise ValueError("Unexpected microdescriptor retrieved.")
@@ -411,9 +414,8 @@ def fetch_certificates(v3idents: List[str]) -> List[KeyCertificate]:
 
 
 def retrieve_hash_from_signature(
-        certificate: KeyCertificate,
-        signature: DocumentSignature
-    ) -> Optional[bytes]:
+    certificate: KeyCertificate, signature: DocumentSignature
+) -> Optional[bytes]:
     """
     As Tor does not do the full PKCS#1 1.5 signature scheme, and Stem's validation does not seems
     to work in the current version, we implemented our own way to retrieve the hash from a
@@ -446,9 +448,8 @@ def retrieve_hash_from_signature(
 
 
 def consensus_validate_signatures(
-        consensus: NetworkStatusDocumentV3,
-        key_certificates: List[KeyCertificate]
-    ) -> bool:
+    consensus: NetworkStatusDocumentV3, key_certificates: List[KeyCertificate]
+) -> bool:
     """
     Validate the signature of a consensus.
 
@@ -459,7 +460,9 @@ def consensus_validate_signatures(
     :return: True if the certificate is valid, False otherwise
     """
     # pylint: disable=no-member
-    consensus_digest: bytes = consensus.digest(DigestHash.SHA256, DigestEncoding.RAW).digest()
+    consensus_digest: bytes = consensus.digest(
+        DigestHash.SHA256, DigestEncoding.RAW
+    ).digest()
 
     num_valid = 0
 
@@ -468,10 +471,10 @@ def consensus_validate_signatures(
         fingerprint = certificate.fingerprint
         signature = next(
             filter(
-                lambda sig, fingerprint=fingerprint:
-                sig.identity == fingerprint, consensus.signatures
+                lambda sig, fingerprint=fingerprint: sig.identity == fingerprint,
+                consensus.signatures,
             ),
-            None
+            None,
         )
         if signature is None:
             continue
@@ -501,18 +504,19 @@ def extract_mtbf(router: Optional[RouterStatusEntryMicroV3]) -> int:
     if not stats_line or not stats_line[0] or not stats_line[0][0]:
         return 0
 
-    raw_stats: Dict[str, str] = dict(tuple(s.split("=")) for s in stats_line[0][0].split(" "))
+    raw_stats: Dict[str, str] = dict(
+        tuple(s.split("=")) for s in stats_line[0][0].split(" ")
+    )
     return int(raw_stats.get("mtbf", 0))
 
 
 def select_potential_routers(
-        consensus: NetworkStatusDocumentV3,
-        mtbf_vote: NetworkStatusDocumentV3
-    ) -> Tuple[
-        List[RouterStatusEntryMicroV3],
-        List[RouterStatusEntryMicroV3],
-        List[RouterStatusEntryMicroV3]
-    ]:
+    consensus: NetworkStatusDocumentV3, mtbf_vote: NetworkStatusDocumentV3
+) -> Tuple[
+    List[RouterStatusEntryMicroV3],
+    List[RouterStatusEntryMicroV3],
+    List[RouterStatusEntryMicroV3],
+]:
     """
     Select the potential routers to act as guards, middle relays and exits.
 
@@ -530,7 +534,6 @@ def select_potential_routers(
 
         # We only consider routers which are stable and fast.
         if FLAG_STABLE in flags and FLAG_FAST in flags:
-
             # Guards need to be reachable on HTTPS port to bypass strict firewalls.
             if FLAG_GUARD in flags and is_orport_used(router, 443):
                 potential_guards.append(router)
@@ -550,10 +553,10 @@ def select_potential_routers(
 
 
 def select_routers(
-        consensus: NetworkStatusDocumentV3,
-        mtbf_vote: NetworkStatusDocumentV3,
-        number_routers: int,
-    ) -> List[RouterStatusEntryMicroV3]:
+    consensus: NetworkStatusDocumentV3,
+    mtbf_vote: NetworkStatusDocumentV3,
+    number_routers: int,
+) -> List[RouterStatusEntryMicroV3]:
     """
     Select a subset of routers in the consensus.
 
@@ -573,35 +576,33 @@ def select_routers(
     number_exits = number_guards
     number_middles = number_routers - number_guards - number_exits
 
-    (
-        potential_guards,
-        potential_middles,
-        potential_exits
-    ) = select_potential_routers(consensus, mtbf_vote)
+    (potential_guards, potential_middles, potential_exits) = select_potential_routers(
+        consensus, mtbf_vote
+    )
 
     if number_guards > len(potential_guards):
         LOGGER.warning(
             "Insufficient number of guard routers in the consensus (%d routers present).",
-            len(potential_guards)
+            len(potential_guards),
         )
 
     if number_exits > len(potential_exits):
         LOGGER.warning(
             "Insufficient number of exit routers in the consensus (%d routers present).",
-            len(potential_exits)
+            len(potential_exits),
         )
 
     # We cache the MTBF values to avoid having to parse the line multiple times.
     mtbf_cache = {
-        router.fingerprint: extract_mtbf(mtbf_vote.routers.get(router.fingerprint, None))
+        router.fingerprint: extract_mtbf(
+            mtbf_vote.routers.get(router.fingerprint, None)
+        )
         for router in potential_guards + potential_middles + potential_exits
     }
 
     # We select the most stable exit nodes.
     exits = nlargest(
-        number_exits,
-        potential_exits,
-        key=lambda r: mtbf_cache.get(r.fingerprint, 0)
+        number_exits, potential_exits, key=lambda r: mtbf_cache.get(r.fingerprint, 0)
     )
 
     selected_set = {router.fingerprint for router in exits}
@@ -610,7 +611,9 @@ def select_routers(
     guards = nlargest(
         number_guards,
         potential_guards,
-        key=lambda r: mtbf_cache.get(r.fingerprint, 0) if r.fingerprint not in selected_set else 0
+        key=lambda r: mtbf_cache.get(r.fingerprint, 0)
+        if r.fingerprint not in selected_set
+        else 0,
     )
 
     for router in guards:
@@ -620,7 +623,9 @@ def select_routers(
     middles = nlargest(
         number_middles,
         potential_middles,
-        key=lambda r: mtbf_cache.get(r.fingerprint, 0) if r.fingerprint not in selected_set else 0
+        key=lambda r: mtbf_cache.get(r.fingerprint, 0)
+        if r.fingerprint not in selected_set
+        else 0,
     )
 
     # We remove exit flags from routers not selected as potential exit relay.
@@ -641,10 +646,10 @@ def select_routers(
 
 
 def sign_consensus(
-        consensus_unsigned: bytes,
-        authority_signing_key: RSA.RsaKey,
-        authority_certificate: KeyCertificate,
-    ) -> bytes:
+    consensus_unsigned: bytes,
+    authority_signing_key: RSA.RsaKey,
+    authority_certificate: KeyCertificate,
+) -> bytes:
     """
     Sign a raw unsigned consensus.
 
@@ -670,47 +675,47 @@ def sign_consensus(
     signature_size = authority_signing_key.size_in_bytes()
     padding_len = signature_size - len(consensus_digest_raw)
     consensus_digest = (
-        b"\x00\x01" +
-        (b"\xff" * (padding_len - 3)) +
-        b"\x00" +
-        consensus_digest_raw
+        b"\x00\x01" + (b"\xff" * (padding_len - 3)) + b"\x00" + consensus_digest_raw
     )
 
     consensus_digest_i = int.from_bytes(consensus_digest, "big")
 
     # We need to do a raw RSA in this case.
     # pylint: disable=protected-access
-    signature_b = authority_signing_key._decrypt(consensus_digest_i).to_bytes(signature_size)
+    signature_b = authority_signing_key._decrypt(consensus_digest_i).to_bytes(
+        signature_size
+    )
 
     signature_b64 = b64encode(signature_b).decode("ascii")
     signature_pem = (
-        "-----BEGIN SIGNATURE-----\n" +
-        re.sub("(.{64})", "\\1\n", signature_b64, 0, re.DOTALL) +
-        "\n-----END SIGNATURE-----\n"
+        "-----BEGIN SIGNATURE-----\n"
+        + re.sub("(.{64})", "\\1\n", signature_b64, 0, re.DOTALL)
+        + "\n-----END SIGNATURE-----\n"
     )
 
     auth_fingerprint = authority_certificate.fingerprint
     signature = (
-        f"sha256 {auth_fingerprint} {signing_key_digest}\n{signature_pem}"
-        .encode("ascii")
+        f"sha256 {auth_fingerprint} {signing_key_digest}\n{signature_pem}".encode(
+            "ascii"
+        )
     )
 
     return consensus_unsigned + signature
 
 
 def generate_signed_consensus(
-        consensus: NetworkStatusDocumentV3,
-        routers: List[RouterStatusEntryMicroV3],
-        authority_signing_key: RSA.RsaKey,
-        authority_certificate: KeyCertificate,
-        authority_name: str,
-        authority_hostname: str,
-        authority_ip_address: str,
-        authority_dirport: int,
-        authority_orport: int,
-        authority_contact: str,
-        consensus_validity_days: int
-    ) -> bytes:
+    consensus: NetworkStatusDocumentV3,
+    routers: List[RouterStatusEntryMicroV3],
+    authority_signing_key: RSA.RsaKey,
+    authority_certificate: KeyCertificate,
+    authority_name: str,
+    authority_hostname: str,
+    authority_ip_address: str,
+    authority_dirport: int,
+    authority_orport: int,
+    authority_contact: str,
+    consensus_validity_days: int,
+) -> bytes:
     """
     Generate a consensus with a custom set of routers, signed by a custom authority.
 
@@ -736,7 +741,7 @@ def generate_signed_consensus(
     header = CONSENSUS_HEADER_FMT.format(
         valid_after=valid_after.strftime(CONSENSUS_TIME_FORMAT),
         fresh_until=fresh_until.strftime(CONSENSUS_TIME_FORMAT),
-        valid_until=valid_until.strftime(CONSENSUS_TIME_FORMAT)
+        valid_until=valid_until.strftime(CONSENSUS_TIME_FORMAT),
     ).encode("ascii")
 
     # Prepare our authority entry.
@@ -747,7 +752,7 @@ def generate_signed_consensus(
         ip_address=authority_ip_address,
         dirport=authority_dirport,
         orport=authority_orport,
-        contact=authority_contact
+        contact=authority_contact,
     ).encode("ascii")
 
     # prepare router entries
@@ -769,17 +774,10 @@ def generate_signed_consensus(
 
     # Tor do not follow the PKCS#1 v1.5 signature scheme strictly,
     # so we can not rely on a library to do it.
-    consensus_unsigned = (
-        header +
-        authority +
-        routers_b +
-        CONSENSUS_FOOTER_IN_SIGNATURE
-    )
+    consensus_unsigned = header + authority + routers_b + CONSENSUS_FOOTER_IN_SIGNATURE
 
     consensus_signed = sign_consensus(
-        consensus_unsigned,
-        authority_signing_key,
-        authority_certificate
+        consensus_unsigned, authority_signing_key, authority_certificate
     )
 
     return consensus_signed
@@ -797,9 +795,9 @@ def generate_microdescriptors(microdescriptors: List[Microdescriptor]) -> bytes:
 
 
 def compute_churn(
-        consensus_customized: NetworkStatusDocumentV3,
-        consensus_latest: NetworkStatusDocumentV3
-    ) -> List[str]:
+    consensus_customized: NetworkStatusDocumentV3,
+    consensus_latest: NetworkStatusDocumentV3,
+) -> List[str]:
     """
     Compute the churn between a customized consensus produced by this script and a newer consensus.
 
@@ -820,10 +818,9 @@ def compute_churn(
             churn.append(router.fingerprint)
             continue
 
-        if (
-                FLAG_EXIT in router.flags and
-                (FLAG_EXIT not in cons_router.flags or FLAG_BAD_EXIT in cons_router.flags)
-            ):
+        if FLAG_EXIT in router.flags and (
+            FLAG_EXIT not in cons_router.flags or FLAG_BAD_EXIT in cons_router.flags
+        ):
             churn.append(router.fingerprint)
             continue
 
@@ -831,9 +828,9 @@ def compute_churn(
 
 
 def validate_churn_threshold(
-        churn: List[str],
-        consensus_customized: NetworkStatusDocumentV3,
-    ) -> None:
+    churn: List[str],
+    consensus_customized: NetworkStatusDocumentV3,
+) -> None:
     """
     Validate that a generated churn contains a number of routers below a threshold.
 
@@ -844,17 +841,20 @@ def validate_churn_threshold(
     """
     threshold = floor(len(consensus_customized.routers) * CHURN_THRESHOLD_RATIO)
     if len(churn) > threshold:
-        raise ChurnAboveThreshold("There are too many churned routers. "
-            "Please regenerate the customized consensus.")
+        raise ChurnAboveThreshold(
+            "There are too many churned routers. "
+            "Please regenerate the customized consensus."
+        )
+
 
 def generate_certificate(
-        authority_identity_key_path: Path,
-        authority_signing_key_path: Path,
-        authority_certificate_path: Path,
-        authority_v3ident_path: Path,
-        authority_name: Path,
-        certificate_validity_months: int
-    ) -> None:
+    authority_identity_key_path: Path,
+    authority_signing_key_path: Path,
+    authority_certificate_path: Path,
+    authority_v3ident_path: Path,
+    authority_name: Path,
+    certificate_validity_months: int,
+) -> None:
     """
     Generate a certificate for a custom authority.
 
@@ -869,7 +869,9 @@ def generate_certificate(
     """
     password = environ.get(DIR_AUTH_PASSWORD_ENV, None)
     if password is None:
-        raise Exception(f"No password provided as environment variable {DIR_AUTH_PASSWORD_ENV}.")
+        raise Exception(
+            f"No password provided as environment variable {DIR_AUTH_PASSWORD_ENV}."
+        )
 
     create_new_identity = not authority_identity_key_path.exists()
     reuse_signing_key = not create_new_identity and authority_signing_key_path.exists()
@@ -887,24 +889,27 @@ def generate_certificate(
     authority_certificate_raw = authority_certificate_path.read_bytes()
     authority_certificate = KeyCertificate(authority_certificate_raw)
 
-    v3ident = json.dumps({"name": authority_name, "v3ident": authority_certificate.fingerprint})
+    v3ident = json.dumps(
+        {"name": authority_name, "v3ident": authority_certificate.fingerprint}
+    )
 
     authority_v3ident_path.write_text(v3ident)
 
+
 def generate_customized_consensus(
-        authority_signing_key_path: Path,
-        authority_certificate_path: Path,
-        consensus_path: Path,
-        microdescriptors_path: Path,
-        number_routers: int,
-        authority_name: str,
-        authority_hostname: str,
-        authority_ip_address: str,
-        authority_dirport: int,
-        authority_orport: int,
-        authority_contact: str,
-        consensus_validity_days: int
-    ) -> None:
+    authority_signing_key_path: Path,
+    authority_certificate_path: Path,
+    consensus_path: Path,
+    microdescriptors_path: Path,
+    number_routers: int,
+    authority_name: str,
+    authority_hostname: str,
+    authority_ip_address: str,
+    authority_dirport: int,
+    authority_orport: int,
+    authority_contact: str,
+    consensus_validity_days: int,
+) -> None:
     """
     Generate a customized consensus from data retrieved from the Tor network authorities.
 
@@ -948,7 +953,9 @@ def generate_customized_consensus(
     auth_mtbf = authorities[AUTHORITY_MTBF_MEASURE]
     vote_mtbf = fetch_vote(auth_mtbf)
 
-    key_cert_mtbf = list(filter(lambda c: c.fingerprint == auth_mtbf.v3ident, key_certificates))
+    key_cert_mtbf = list(
+        filter(lambda c: c.fingerprint == auth_mtbf.v3ident, key_certificates)
+    )
 
     try:
         vote_mtbf.validate_signatures(key_cert_mtbf)
@@ -972,7 +979,7 @@ def generate_customized_consensus(
         authority_dirport,
         authority_orport,
         authority_contact,
-        consensus_validity_days
+        consensus_validity_days,
     )
 
     our_consensus = NetworkStatusDocumentV3(consensus)
@@ -989,10 +996,8 @@ def generate_customized_consensus(
 
 
 def generate_churninfo(
-        consensus_path: Path,
-        churn_path: Path,
-        consensus_latest: NetworkStatusDocumentV3
-    ) -> None:
+    consensus_path: Path, churn_path: Path, consensus_latest: NetworkStatusDocumentV3
+) -> None:
     """
     Generate a churn file from a customized consensus and the latest consensus retrieved from the
     Tor network authorities.
@@ -1028,7 +1033,7 @@ def generate_certificate_cb(namespace: Namespace) -> None:
         authority_certificate_path,
         authority_v3ident_path,
         authority_name,
-        certificate_validity_months
+        certificate_validity_months,
     )
 
 
@@ -1107,45 +1112,46 @@ def main(program: str, arguments: List[str]) -> None:
     )
 
     parser_churn = subparsers.add_parser(
-        "compute-churn", help="Compute current churn in customized directory information."
+        "compute-churn",
+        help="Compute current churn in customized directory information.",
     )
 
     parser_certificate.add_argument(
         "--authority-identity-key",
         help="Signing key of the directory authority to sign the consensus.",
         type=Path,
-        default="authority_identity_key"
+        default="authority_identity_key",
     )
     parser_certificate.add_argument(
         "--authority-signing-key",
         help="Signing key of the directory authority to sign the consensus.",
         type=Path,
-        default="authority_signing_key"
+        default="authority_signing_key",
     )
     parser_certificate.add_argument(
         "--authority-certificate",
         help="Certificate of the directory authority used to verify the consensus.",
         type=Path,
-        default="certificate.txt"
+        default="certificate.txt",
     )
     parser_certificate.add_argument(
         "--authority-v3ident",
         help="File containing nickname and v3ident of the authority.",
         type=Path,
-        default="authority.json"
+        default="authority.json",
     )
     parser_certificate.add_argument(
         "--authority-name",
         help="Name of the directory authority.",
         type=str,
-        default="spring"
+        default="spring",
     )
     parser_certificate.add_argument(
         "-m",
         "--certificate-validity-months",
         help="Number of months that the certificate should be valid.",
         type=int,
-        default=12
+        default=12,
     )
 
     parser_certificate.set_defaults(callback=generate_certificate_cb)
@@ -1154,74 +1160,74 @@ def main(program: str, arguments: List[str]) -> None:
         "--authority-signing-key",
         help="Signing key of the directory authority to sign the consensus.",
         type=Path,
-        default="authority_signing_key"
+        default="authority_signing_key",
     )
     parser_dirinfo.add_argument(
         "--authority-certificate",
         help="Certificate of the directory authority used to verify the consensus.",
         type=Path,
-        default="certificate.txt"
+        default="certificate.txt",
     )
     parser_dirinfo.add_argument(
         "--authority-name",
         help="Name of the directory authority.",
         type=str,
-        default="spring"
+        default="spring",
     )
     parser_dirinfo.add_argument(
         "--authority-hostname",
         help="Hostname of the directory authority.",
         type=str,
-        default="127.0.0.1"
+        default="127.0.0.1",
     )
     parser_dirinfo.add_argument(
         "--authority-ip-address",
         help="Address of the directory authority.",
         type=str,
-        default="127.0.0.1"
+        default="127.0.0.1",
     )
     parser_dirinfo.add_argument(
         "--authority-dirport",
         help="Dir port of the directory authority.",
         type=int,
-        default=80
+        default=80,
     )
     parser_dirinfo.add_argument(
         "--authority-orport",
         help="OR port of the directory authority.",
         type=int,
-        default=443
+        default=443,
     )
     parser_dirinfo.add_argument(
         "--authority-contact",
         help="Contact info for the directory authority.",
         type=str,
-        default="EPFL / SPRING Lab"
+        default="EPFL / SPRING Lab",
     )
     parser_dirinfo.add_argument(
         "--consensus",
         help="File in which to write the generated consensus.",
         type=Path,
-        default="consensus.txt"
+        default="consensus.txt",
     )
     parser_dirinfo.add_argument(
         "--consensus-validity-days",
         help="Number of days that the consensus should be valid.",
         type=int,
-        default=7
+        default=7,
     )
     parser_dirinfo.add_argument(
         "--microdescriptors",
         help="File in which to write the microdescriptors of the selected routers.",
         type=Path,
-        default="microdescriptors.txt"
+        default="microdescriptors.txt",
     )
     parser_dirinfo.add_argument(
         "-n",
         "--number-routers",
         help="Number of routers to select from the consensus.",
         type=int,
-        default=120
+        default=120,
     )
 
     parser_dirinfo.set_defaults(callback=generate_customized_consensus_cb)
@@ -1230,13 +1236,13 @@ def main(program: str, arguments: List[str]) -> None:
         "--churn",
         help="File in which to write the computed churn.",
         type=Path,
-        default="churn.txt"
+        default="churn.txt",
     )
     parser_churn.add_argument(
         "--consensus",
         help="File in which to write the consensus generated with this script.",
         type=Path,
-        default="consensus.txt"
+        default="consensus.txt",
     )
 
     parser_churn.set_defaults(callback=generate_churninfo_cb)
@@ -1248,7 +1254,6 @@ def main(program: str, arguments: List[str]) -> None:
 
     else:
         parser.print_help()
-
 
 
 if __name__ == "__main__":

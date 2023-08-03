@@ -4,14 +4,8 @@
 Automate the generation of a directory structure
 """
 
-from argparse import (
-    ArgumentParser,
-    Namespace
-)
-from datetime import (
-    datetime,
-    timedelta
-)
+from argparse import ArgumentParser, Namespace
+from datetime import datetime, timedelta
 from pathlib import Path
 from posix import R_OK
 from typing import List
@@ -29,7 +23,7 @@ from gen_fresh_dirinfo import (
     generate_churninfo,
     generate_customized_consensus,
     InvalidConsensus,
-    LOGGER
+    LOGGER,
 )
 
 DIRNAME_AUTHORITY_PRIVATE = "private"
@@ -102,7 +96,9 @@ def ensure_dir_rw_access(directory: Path) -> None:
         raise InconsistentDirectoryStructure(f"File {directory} should be a directory.")
 
     if not os.access(directory, os.R_OK | os.W_OK):
-        raise InconsistentDirectoryStructure(f"Directory {directory} do not have enough permission.")
+        raise InconsistentDirectoryStructure(
+            f"Directory {directory} do not have enough permission."
+        )
 
 
 def _ensure_file_access(filepath: Path, access_flags: int) -> None:
@@ -118,7 +114,9 @@ def _ensure_file_access(filepath: Path, access_flags: int) -> None:
         raise InconsistentDirectoryStructure(f"File {filepath} does not exists.")
 
     if not os.access(filepath, access_flags):
-        raise InconsistentDirectoryStructure(f"File {filepath} do not have enough permission.")
+        raise InconsistentDirectoryStructure(
+            f"File {filepath} do not have enough permission."
+        )
 
 
 def ensure_file_r_access(filepath: Path) -> None:
@@ -163,7 +161,9 @@ def ensure_valid_authority_dir(dir_auth: Path, date_utc: datetime) -> None:
     identity_key_path = dir_auth / DIRNAME_AUTHORITY_PRIVATE / FILENAME_AUTHORITY_KEY_ID
     ensure_file_r_access(identity_key_path)
 
-    signing_key_path = dir_auth / DIRNAME_AUTHORITY_PRIVATE / FILENAME_AUTHORITY_KEY_SIGNATURE
+    signing_key_path = (
+        dir_auth / DIRNAME_AUTHORITY_PRIVATE / FILENAME_AUTHORITY_KEY_SIGNATURE
+    )
     ensure_file_r_access(signing_key_path)
 
     certificate_path = dir_auth / DIRNAME_AUTHORITY_PUBLIC / FILENAME_CERTIFICATE
@@ -171,7 +171,9 @@ def ensure_valid_authority_dir(dir_auth: Path, date_utc: datetime) -> None:
     certificate_raw = certificate_path.read_bytes()
     certificate = KeyCertificate(certificate_raw)
 
-    authority_path = dir_auth / DIRNAME_AUTHORITY_PUBLIC / FILENAME_AUTHORITY_FINGERPRINT
+    authority_path = (
+        dir_auth / DIRNAME_AUTHORITY_PUBLIC / FILENAME_AUTHORITY_FINGERPRINT
+    )
     ensure_file_r_access(authority_path)
 
     if certificate.expires <= date_utc:
@@ -203,7 +205,7 @@ def update_authority_dir(dir_auth: Path) -> None:
         certificate_path,
         authority_path,
         AUTHORITY_NAME,
-        CERTIFICATE_VALIDITY_MONTHS
+        CERTIFICATE_VALIDITY_MONTHS,
     )
 
 
@@ -218,7 +220,9 @@ def create_current_dir(dir_auth: Path, dir_current: Path) -> None:
 
     dir_current.mkdir()
 
-    signing_key_path = dir_auth / DIRNAME_AUTHORITY_PRIVATE / FILENAME_AUTHORITY_KEY_SIGNATURE
+    signing_key_path = (
+        dir_auth / DIRNAME_AUTHORITY_PRIVATE / FILENAME_AUTHORITY_KEY_SIGNATURE
+    )
     certificate_path = dir_auth / DIRNAME_AUTHORITY_PUBLIC / FILENAME_CERTIFICATE
     consensus_path = dir_current / FILENAME_CONSENSUS
     microdescriptor_path = dir_current / FILENAME_MICRODESCRIPTORS
@@ -235,7 +239,7 @@ def create_current_dir(dir_auth: Path, dir_current: Path) -> None:
         AUTHORITY_DIR_PORT,
         AUTHORITY_OR_PORT,
         AUTHORITY_CONTACT,
-        CONSENSUS_VALIDITY_DAYS
+        CONSENSUS_VALIDITY_DAYS,
     )
 
 
@@ -274,7 +278,9 @@ def update_dir(dir_auth: Path, root: Path, date_utc: datetime) -> None:
     potential_documents_dirs = list()
 
     for dt_days in range(1, CONSENSUS_VALIDITY_DAYS):
-        dir_documents_name: str = (date_utc - timedelta(days=dt_days)).strftime("%Y%m%d")
+        dir_documents_name: str = (date_utc - timedelta(days=dt_days)).strftime(
+            "%Y%m%d"
+        )
         potential_documents_dirs.append(dir_documents_name)
 
     for dir_documents_name in potential_documents_dirs:
@@ -285,7 +291,9 @@ def update_dir(dir_auth: Path, root: Path, date_utc: datetime) -> None:
                 consensus = fetch_valid_consensus()
                 update_churn(dir_documents, consensus)
             else:
-                raise InconsistentDirectoryStructure(f"Directory {dir_documents} is inconsistent.")
+                raise InconsistentDirectoryStructure(
+                    f"Directory {dir_documents} is inconsistent."
+                )
 
 
 def directory_structure(namespace: Namespace) -> None:
@@ -317,13 +325,13 @@ def main(program: str, arguments: List[str]) -> None:
         "--authority-directory",
         help="Directory containing files related to the Tor directory authority.",
         type=Path,
-        default="authority"
+        default="authority",
     )
     parser.add_argument(
         "--root-directory",
         help="Directory containing up-to-date documents for using Lightarti-rest.",
         type=Path,
-        default="documents-public"
+        default="documents-public",
     )
 
     namespace = parser.parse_args(arguments)

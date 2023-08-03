@@ -169,7 +169,6 @@ def setup_logger() -> logging.Logger:
     logger = logging.getLogger("arti-data-gen")
     logger.setLevel(logging.INFO)
 
-    #handler = logging.FileHandler("arti-data-gen.log")
     handler = logging.StreamHandler()
     handler.setLevel(logging.INFO)
 
@@ -1245,11 +1244,7 @@ def main(program: str, arguments: List[str]) -> None:
     namespace = parser.parse_args(arguments)
 
     if "callback" in namespace:
-        #try:
         namespace.callback(namespace)
-        #except Exception as err:
-        #    LOGGER.error(err)
-        #    sys.exit(1)
 
     else:
         parser.print_help()

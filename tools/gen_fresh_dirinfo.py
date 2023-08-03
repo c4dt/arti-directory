@@ -6,6 +6,7 @@
 Script to produce data to pass to lightarti-rest.
 """
 
+# standard library imports
 import json
 import logging
 import re
@@ -41,6 +42,7 @@ from typing import (
     Tuple,
 )
 
+# third party imports
 from Crypto.PublicKey import RSA
 
 from stem.descriptor import (
@@ -558,7 +560,7 @@ def select_routers(
 
     :param consensus: the consensus containing routers descriptions
     :param mtbf_vote: vote of an authority publishing MTBF values
-    :param n_routers: the final number of routers that we would like
+    :param number_routers: the final number of routers that we would like
 
     :raises ValueError: One of the parameter given in argument has an invalid value.
 
@@ -718,8 +720,10 @@ def generate_signed_consensus(
     :param authority_signing_key: RSA key of the authority that need to sign the consensus
     :param authority_certificate: certificate of the authority that need to sign the consensus
     :param authority_name: name of the authority
-    :param authority_addresses: IP addresses of the authority
-    :param authority_ports: OR port and DIR port of the authority
+    :param authority_hostname: authority hostname
+    :param authority_ip_address: IP address of the authority
+    :param authority_dir_port: DIR port of the authority
+    :param authority_orport: ORPort of the authority
     :param authority_contact: contact info of the authority
     :param consensus_validity_days: lifetime of the consensus in days
 
@@ -844,7 +848,6 @@ def validate_churn_threshold(
         raise ChurnAboveThreshold("There are too many churned routers. "
             "Please regenerate the customized consensus.")
 
-
 def generate_certificate(
         authority_identity_key_path: Path,
         authority_signing_key_path: Path,
@@ -856,7 +859,14 @@ def generate_certificate(
     """
     Generate a certificate for a custom authority.
 
-    :param:
+    :param authority_identity_key_path: directory authority's signing key
+    :param authority_signing_key_path: directory authority's signing key
+    :param authority_certificate_path: directory authority's certificate
+    :param authority_v3ident_path: file containing directory authority's nickname and v3ident
+    :param authority_name: directory authority name
+    :param certificate_validity_months: number of months that the certificate should be valid
+
+    :raises: Exception if password is not set.
     """
     password = environ.get(DIR_AUTH_PASSWORD_ENV, None)
     if password is None:
@@ -882,7 +892,6 @@ def generate_certificate(
 
     authority_v3ident_path.write_text(v3ident)
 
-
 def generate_customized_consensus(
         authority_signing_key_path: Path,
         authority_certificate_path: Path,
@@ -900,7 +909,20 @@ def generate_customized_consensus(
     """
     Generate a customized consensus from data retrieved from the Tor network authorities.
 
-    :param authority_signing_key_path:
+    :param authority_signing_key_path: directory authority's signing key
+    :param authority_certificate_path: directory authority's certificate
+    :param consensus_path: file in which to write the consensus generated with this script
+    :param microdescriptors_path: file to write selected routers' microdescriptors to
+    :param number_routers: number of routers to select from the consensus
+    :param authority_name: directory authority's name
+    :param authority_hostname: directory authority's hostname
+    :param authority_ip_address: directory authority's IP
+    :param authority_dirport: directory authority's dir port
+    :param authority_orport: directory authority's ORPort
+    :param authority_contact: directory authorty's contact
+    :param consensus_validity_days: number of days consensus should be valid
+
+    :raises: InvalidConsensus if signature validation failed
     """
 
     # Read the relevant input files related to the authority.

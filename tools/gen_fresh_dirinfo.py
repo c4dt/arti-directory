@@ -88,7 +88,7 @@ AUTHORITY_MTBF_MEASURE = "moria1"
 AUTHORITY_FMT = """dir-source {name} {fingerprint} {hostname} {ip_address} {dirport} {orport}
 contact {contact}
 vote-digest 0000000000000000000000000000000000000000
-"""     # noqa: E501
+"""  # noqa: E501
 
 # Header of a consensus (with many values already set).
 CONSENSUS_HEADER_FMT = """network-status-version 3 microdesc
@@ -108,13 +108,13 @@ required-relay-protocols Cons=2 Desc=2 DirCache=2 HSDir=2 HSIntro=4 HSRend=2 Lin
 params CircuitPriorityHalflifeMsec=30000 DoSCircuitCreationEnabled=1 DoSConnectionEnabled=1 DoSConnectionMaxConcurrentCount=50 DoSRefuseSingleHopClientRendezvous=1 ExtendByEd25519ID=1 KISTSchedRunInterval=2 NumDirectoryGuards=3 NumEntryGuards=1 NumNTorsPerTAP=100 UseOptimisticData=1 bwauthpid=1 cbttestfreq=10 hs_service_max_rdv_failures=1 hsdir_spread_store=4 pb_disablepct=0 sendme_emit_min_version=1 usecreatefast=0
 shared-rand-previous-value 1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
 shared-rand-current-value 1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-"""     # noqa: 501
+"""  # noqa: 501
 
 # Footer of the consensus included in the signature's hash.
 # For now, weight are kept to similar values found in the consensus.
 CONSENSUS_FOOTER_IN_SIGNATURE = b"""directory-footer
 bandwidth-weights Wbd=0 Wbe=0 Wbg=4273 Wbm=10000 Wdb=10000 Web=10000 Wed=10000 Wee=10000 Weg=10000 Wem=10000 Wgb=10000 Wgd=0 Wgg=5727 Wgm=5727 Wmb=10000 Wmd=0 Wme=0 Wmg=4273 Wmm=10000
-directory-signature """     # noqa: 501
+directory-signature """  # noqa: 501
 
 # Regex to parse the raw base 64 content of a signature.
 SIGNATURE_RE = re.compile("-+BEGIN SIGNATURE-+\n([^-]+)\n-+END SIGNATURE-+")
@@ -584,13 +584,13 @@ def select_routers(
 
     if number_guards > len(potential_guards):
         LOGGER.warning(
-            "Insufficient number of guard routers in the consensus (%d routers present).",      # noqa: 501
+            "Insufficient number of guard routers in the consensus (%d routers present).",  # noqa: 501
             len(potential_guards),
         )
 
     if number_exits > len(potential_exits):
         LOGGER.warning(
-            "Insufficient number of exit routers in the consensus (%d routers present).",       # noqa: 501
+            "Insufficient number of exit routers in the consensus (%d routers present).",  # noqa: 501
             len(potential_exits),
         )
 

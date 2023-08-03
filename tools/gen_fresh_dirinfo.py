@@ -1235,7 +1235,7 @@ def main(program: str, arguments: List[str]) -> None:
     )
     parser_churn.add_argument(
         "--consensus",
-        help="File in which to read the consensus generated with this script.",
+        help="File in which to write the consensus generated with this script.",
         type=Path,
         default="consensus.txt"
     )

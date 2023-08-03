@@ -15,7 +15,6 @@ from stem.descriptor.networkstatus import (
     NetworkStatusDocumentV3,
 )
 from stem.directory import Authority
-from stem.exit_policy import MicroExitPolicy
 
 from gen_fresh_dirinfo import (
     AUTHORITY_MTBF_MEASURE,

@@ -7,7 +7,6 @@ Automate the generation of a directory structure
 from argparse import ArgumentParser, Namespace
 from datetime import datetime, timedelta
 from pathlib import Path
-from posix import R_OK
 from typing import List
 
 import os
@@ -50,7 +49,8 @@ CONSENSUS_NUMBER_ROUTERS = 120
 # Minimal validity dUration of the customized consensus.
 CONSENSUS_VALIDITY_DAYS = 14
 
-# Feel free to modify these values as you want, they are used to fill fields in the certificate
+# Feel free to modify these values as you want,
+# they are used to fill fields in the certificate
 # and customized consensus but do not impact on Lightarti-rest behavior.
 AUTHORITY_NAME = "Center for Digital Trust"
 AUTHORITY_HOSTNAME = "c4dt.org"
@@ -87,7 +87,8 @@ def ensure_dir_rw_access(directory: Path) -> None:
     Ensures that a directory exists and that we have read/write access to it.
 
     :param directory: directory we want to ensure to have these properties
-    :raises InconsistentDirectoryStructure: The directory does not have these properties.
+    :raises InconsistentDirectoryStructure: The directory does not have
+        these properties.
     """
     if not directory.exists():
         directory.mkdir()
@@ -145,7 +146,8 @@ def ensure_valid_authority_dir(dir_auth: Path, date_utc: datetime) -> None:
 
     :param dir_auth: directory containing or to contain the authority files
     :param date_utc: date for which the authority should be valid (in UTC)
-    :raises InconsistentDirectoryStructure: At least one of the authority file is invalid.
+    :raises InconsistentDirectoryStructure: At least one of the authority file
+        is invalid.
     """
     if not dir_auth.exists():
         LOGGER.info(f"Create new authority in {dir_auth}.")
@@ -298,7 +300,8 @@ def update_dir(dir_auth: Path, root: Path, date_utc: datetime) -> None:
 
 def directory_structure(namespace: Namespace) -> None:
     """
-    Function to build or update a directory structure containing up-to-date network info.
+    Function to build or update a directory structure containing up-to-date network
+    info.
 
     :param namespace: namespace containing the parsed arguments.
     """

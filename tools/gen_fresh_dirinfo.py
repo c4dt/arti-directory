@@ -65,8 +65,8 @@ from stem.directory import Authority
 from stem.exit_policy import MicroExitPolicy
 
 
-# Environment variable from which to retrieve the password to encrypt the identity key of the
-# custom directory authority.
+# Environment variable from which to retrieve the password to encrypt the identity key
+# of the custom directory authority.
 DIR_AUTH_PASSWORD_ENV = "DIR_AUTH_PASSWORD"
 
 # Time format used in the consensus.
@@ -79,15 +79,16 @@ FLAG_FAST = "Fast"
 FLAG_GUARD = "Guard"
 FLAG_STABLE = "Stable"
 
-# As of July 2021, mean time before failure (MTBF) is not published in the consensus, but the
-# two directory authorities, moria1 and maatuska are publishing these statistics in their vote.
+# As of July 2021, mean time before failure (MTBF) is not published in the consensus,
+# but the two directory authorities, moria1 and maatuska are publishing
+# these statistics in their vote.
 AUTHORITY_MTBF_MEASURE = "moria1"
 
 # Format of an authority entry in the consensus (with a dummy vote digest).
 AUTHORITY_FMT = """dir-source {name} {fingerprint} {hostname} {ip_address} {dirport} {orport}
 contact {contact}
 vote-digest 0000000000000000000000000000000000000000
-"""
+"""     # noqa: E501
 
 # Header of a consensus (with many values already set).
 CONSENSUS_HEADER_FMT = """network-status-version 3 microdesc
@@ -107,13 +108,13 @@ required-relay-protocols Cons=2 Desc=2 DirCache=2 HSDir=2 HSIntro=4 HSRend=2 Lin
 params CircuitPriorityHalflifeMsec=30000 DoSCircuitCreationEnabled=1 DoSConnectionEnabled=1 DoSConnectionMaxConcurrentCount=50 DoSRefuseSingleHopClientRendezvous=1 ExtendByEd25519ID=1 KISTSchedRunInterval=2 NumDirectoryGuards=3 NumEntryGuards=1 NumNTorsPerTAP=100 UseOptimisticData=1 bwauthpid=1 cbttestfreq=10 hs_service_max_rdv_failures=1 hsdir_spread_store=4 pb_disablepct=0 sendme_emit_min_version=1 usecreatefast=0
 shared-rand-previous-value 1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
 shared-rand-current-value 1 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=
-"""
+"""     # noqa: 501
 
 # Footer of the consensus included in the signature's hash.
 # For now, weight are kept to similar values found in the consensus.
 CONSENSUS_FOOTER_IN_SIGNATURE = b"""directory-footer
 bandwidth-weights Wbd=0 Wbe=0 Wbg=4273 Wbm=10000 Wdb=10000 Web=10000 Wed=10000 Wee=10000 Weg=10000 Wem=10000 Wgb=10000 Wgd=0 Wgg=5727 Wgm=5727 Wmb=10000 Wmd=0 Wme=0 Wmg=4273 Wmm=10000
-directory-signature """
+directory-signature """     # noqa: 501
 
 # Regex to parse the raw base 64 content of a signature.
 SIGNATURE_RE = re.compile("-+BEGIN SIGNATURE-+\n([^-]+)\n-+END SIGNATURE-+")
@@ -193,7 +194,8 @@ def is_orport_used(router: RouterStatusEntryMicroV3, port: int) -> bool:
 
     :return: True if the port is used, False otherwise
     """
-    # This field correspond to the OR port specified in the "router" line of a router's description.
+    # This field correspond to the OR port specified in the "router" line of a
+    # router's description.
     # Per Tor's spec it is always used for an IPv4 address.
     # (Tor directory protocol, version 3, 2.1.1.)
     return router.or_port == port
@@ -205,10 +207,13 @@ def is_address_port_changed(
     """
     Check if the address or the port changed between the addresses of two OR routers.
 
-    :param addresses_ports_origin: list of addresses and ports in the original router description
-    :param addresses_ports_new: list of addresses and ports in an updated router description
+    :param addresses_ports_origin: list of addresses and ports in the original router
+        description
+    :param addresses_ports_new: list of addresses and ports in an updated router
+        description
 
-    :return: True if at least one of the original address or port has changed, False otherwise
+    :return: True if at least one of the original address or port has changed, False
+        otherwise
     """
     new_addresses = {addr[0] for addr in addresses_ports_new}
     new_ports = {addr[1] for addr in addresses_ports_new}
@@ -417,14 +422,15 @@ def retrieve_hash_from_signature(
     certificate: KeyCertificate, signature: DocumentSignature
 ) -> Optional[bytes]:
     """
-    As Tor does not do the full PKCS#1 1.5 signature scheme, and Stem's validation does not seems
-    to work in the current version, we implemented our own way to retrieve the hash from a
-    signature.
+    As Tor does not do the full PKCS#1 1.5 signature scheme, and Stem's validation does
+    not seems to work in the current version, we implemented our own way to retrieve
+    the hash from a signature.
 
     :param certificate: certificate to use to compute the hash of the document
     :param signature: signature to validate
 
-    :return: the hash retrieved from the signature, or None if we failed to retrieve the hash
+    :return: the hash retrieved from the signature, or None if we failed to retrieve
+        the hash
     """
     public_key = RSA.import_key(certificate.signing_key)
     sign_match = SIGNATURE_RE.search(signature.signature)
@@ -454,7 +460,8 @@ def consensus_validate_signatures(
     Validate the signature of a consensus.
 
     :param consensus: Consensus to validate.
-    :param key_certificates: list of certificates against the signatures of certificate needs to be
+    :param key_certificates: list of certificates against the signatures of certificate
+        needs to be
         validated.
 
     :return: True if the certificate is valid, False otherwise
@@ -582,13 +589,13 @@ def select_routers(
 
     if number_guards > len(potential_guards):
         LOGGER.warning(
-            "Insufficient number of guard routers in the consensus (%d routers present).",
+            "Insufficient number of guard routers in the consensus (%d routers present).",      # noqa: 501
             len(potential_guards),
         )
 
     if number_exits > len(potential_exits):
         LOGGER.warning(
-            "Insufficient number of exit routers in the consensus (%d routers present).",
+            "Insufficient number of exit routers in the consensus (%d routers present).",       # noqa: 501
             len(potential_exits),
         )
 
@@ -655,8 +662,8 @@ def sign_consensus(
 
     :param consensus_unsigned: raw consensus that need to be signed
     :param authority_signing_key: signing key of the authority to sign the consensus
-    :param authority_certificate: certificate of the authority used to generate the signature's
-        metadata
+    :param authority_certificate: certificate of the authority used to generate the
+        signature's metadata
 
     :return: raw signed consensus
     """
@@ -721,8 +728,10 @@ def generate_signed_consensus(
 
     :param consensus: original consensus
     :param routers: list of routers selected from the original consensus
-    :param authority_signing_key: RSA key of the authority that need to sign the consensus
-    :param authority_certificate: certificate of the authority that need to sign the consensus
+    :param authority_signing_key: RSA key of the authority that need to sign the
+        consensus
+    :param authority_certificate: certificate of the authority that need to sign the
+        consensus
     :param authority_name: name of the authority
     :param authority_hostname: authority hostname
     :param authority_ip_address: IP address of the authority
@@ -787,7 +796,8 @@ def generate_microdescriptors(microdescriptors: List[Microdescriptor]) -> bytes:
     """
     Generate microdescriptors document.
 
-    :param microdescriptors: list of microdescriptors that need to be present in the file
+    :param microdescriptors: list of microdescriptors that need to be present in the
+        file
 
     :return: bytes representation of the microdescriptors
     """
@@ -799,7 +809,8 @@ def compute_churn(
     consensus_latest: NetworkStatusDocumentV3,
 ) -> List[str]:
     """
-    Compute the churn between a customized consensus produced by this script and a newer consensus.
+    Compute the churn between a customized consensus produced by this script and a
+    newer consensus.
 
     :param consensus_customized: customized consensus produced with this script
     :param consensus_latest: a newer consensus to compare the churn
@@ -861,9 +872,11 @@ def generate_certificate(
     :param authority_identity_key_path: directory authority's signing key
     :param authority_signing_key_path: directory authority's signing key
     :param authority_certificate_path: directory authority's certificate
-    :param authority_v3ident_path: file containing directory authority's nickname and v3ident
+    :param authority_v3ident_path: file containing directory authority's nickname and
+        v3ident
     :param authority_name: directory authority name
-    :param certificate_validity_months: number of months that the certificate should be valid
+    :param certificate_validity_months: number of months that the certificate should
+        be valid
 
     :raises: Exception if password is not set.
     """
@@ -911,11 +924,13 @@ def generate_customized_consensus(
     consensus_validity_days: int,
 ) -> None:
     """
-    Generate a customized consensus from data retrieved from the Tor network authorities.
+    Generate a customized consensus from data retrieved from the Tor network
+    authorities.
 
     :param authority_signing_key_path: directory authority's signing key
     :param authority_certificate_path: directory authority's certificate
-    :param consensus_path: file in which to write the consensus generated with this script
+    :param consensus_path: file in which to write the consensus generated with this
+    script
     :param microdescriptors_path: file to write selected routers' microdescriptors to
     :param number_routers: number of routers to select from the consensus
     :param authority_name: directory authority's name
@@ -944,8 +959,8 @@ def generate_customized_consensus(
     v3idents = [auth.v3ident for auth in consensus_original.directory_authorities]
     key_certificates = fetch_certificates(v3idents)
 
-    # The validation provided by Stem does not works for microdescriptor flavored consensus with
-    # the tested version (1.8.0).
+    # The validation provided by Stem does not works for microdescriptor
+    # consensus with the tested version (1.8.0).
     if not consensus_validate_signatures(consensus_original, key_certificates):
         raise InvalidConsensus("Validation of the consensus' signature failed.")
 
@@ -999,8 +1014,8 @@ def generate_churninfo(
     consensus_path: Path, churn_path: Path, consensus_latest: NetworkStatusDocumentV3
 ) -> None:
     """
-    Generate a churn file from a customized consensus and the latest consensus retrieved from the
-    Tor network authorities.
+    Generate a churn file from a customized consensus and the latest consensus
+    retrieved from the Tor network authorities.
 
     :param consensus_path: path to the customized consensus
     :param churn_path: path to the file to contain the churn information
@@ -1039,7 +1054,8 @@ def generate_certificate_cb(namespace: Namespace) -> None:
 
 def generate_customized_consensus_cb(namespace: Namespace) -> None:
     """
-    Generate a customized consensus from data retrieved from the Tor network authorities.
+    Generate a customized consensus from data retrieved from the Tor network
+    authorities.
 
     :param namespace: namespace containing parsed arguments.
     """
@@ -1074,8 +1090,8 @@ def generate_customized_consensus_cb(namespace: Namespace) -> None:
 
 def generate_churninfo_cb(namespace: Namespace) -> None:
     """
-    Generate a churn file from a customized consensus and the latest consensus retrieved from the
-    Tor network authorities.
+    Generate a churn file from a customized consensus and the latest consensus
+    retrieved from the Tor network authorities.
 
     :param namespace: namespace containing parsed arguments.
     """

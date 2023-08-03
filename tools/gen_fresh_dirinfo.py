@@ -322,7 +322,6 @@ def fetch_vote(authority: Authority) -> NetworkStatusDocumentV3:
 
     :return: the vote of the directory authority
     """
-    # pylint: disable=no-member
 
     downloader = DescriptorDownloader()
 
@@ -344,7 +343,6 @@ def fetch_latest_consensus() -> NetworkStatusDocumentV3:
 
     :return: the fresh consensus parsed by stem
     """
-    # pylint: disable=no-member
 
     downloader = DescriptorDownloader()
 
@@ -441,7 +439,6 @@ def retrieve_hash_from_signature(
     sign_i = int.from_bytes(sign_b, "big")
 
     # We need to do a raw RSA in this case.
-    # pylint: disable=protected-access
     key_size = public_key.size_in_bytes()
     retrieved_hash = public_key._encrypt(sign_i).to_bytes(key_size, "big")
     retrieved_hash_match = PKCS1_15_HASH_RE.match(retrieved_hash)
@@ -466,7 +463,6 @@ def consensus_validate_signatures(
 
     :return: True if the certificate is valid, False otherwise
     """
-    # pylint: disable=no-member
     consensus_digest: bytes = consensus.digest(
         DigestHash.SHA256, DigestEncoding.RAW
     ).digest()
@@ -506,7 +502,6 @@ def extract_mtbf(router: Optional[RouterStatusEntryMicroV3]) -> int:
         return 0
 
     # We need to access to the entries parsed by Stem.
-    # pylint: disable=protected-access
     stats_line = router._entries.get("stats", None)
     if not stats_line or not stats_line[0] or not stats_line[0][0]:
         return 0
@@ -688,7 +683,6 @@ def sign_consensus(
     consensus_digest_i = int.from_bytes(consensus_digest, "big")
 
     # We need to do a raw RSA in this case.
-    # pylint: disable=protected-access
     signature_b = authority_signing_key._decrypt(consensus_digest_i).to_bytes(
         signature_size
     )

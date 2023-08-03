@@ -189,6 +189,7 @@ def is_orport_used(router: RouterStatusEntryMicroV3, port: int) -> bool:
 
     :param router: router entry in the consensus
     :param port: port we want to check
+
     :return: True if the port is used, False otherwise
     """
     # This field correspond to the OR port specified in the "router" line of a router's description.
@@ -206,6 +207,7 @@ def is_address_port_changed(
 
     :param addresses_ports_origin: list of addresses and ports in the original router description
     :param addresses_ports_new: list of addresses and ports in an updated router description
+
     :return: True if at least one of the original address or port has changed, False otherwise
     """
     new_addresses = {addr[0] for addr in addresses_ports_new}
@@ -251,6 +253,7 @@ def call_tor_gencert(
     :param signing_key_file: file where to read or write the signing key
     :param certificate_file: file where to write the certificate
     :param lifetime_in_months: lifetime of the certificate in months
+
     :raises TorCertGenFailed: The tor-gencert command failed.
     """
 
@@ -304,7 +307,9 @@ def fetch_vote(
     Fetch the latest vote from the authority.
 
     :param authority: directory authority from which we want to retrieve the vote.
+
     :raises ValueError: Did not retrieve the expected vote format.
+
     :return: the vote of the directory authority
     """
     # pylint: disable=no-member
@@ -328,6 +333,7 @@ def fetch_latest_consensus() -> NetworkStatusDocumentV3:
     Fetch the latest consensus from the network.
 
     :raises ValueError: Did not retrieve the expected consensus format.
+
     :return: the fresh consensus parsed by stem
     """
     # pylint: disable=no-member
@@ -353,7 +359,9 @@ def fetch_microdescriptors(
 
     :param routers: list of routers status found in the consensus for which we want the
         microdescriptors
+
     :raises ValueError: Did not retrieve the expected microdescriptor format.
+
     :return: a list of microdescriptors
     """
     downloader = DescriptorDownloader()
@@ -386,7 +394,9 @@ def fetch_certificates(v3idents: List[str]) -> List[KeyCertificate]:
     Fetch current certificates of the directory authorities from the network.
 
     :param v3idents: identities of the directory authorities in v3 format
+
     :raises ValueError: Did not retrieve the expected certificate format.
+
     :return: a list of certificates
     """
     downloader = DescriptorDownloader()
@@ -410,6 +420,7 @@ def retrieve_hash_from_signature(
 
     :param certificate: certificate to use to compute the hash of the document
     :param signature: signature to validate
+
     :return: the hash retrieved from the signature, or None if we failed to retrieve the hash
     """
     public_key = RSA.import_key(certificate.signing_key)
@@ -443,6 +454,7 @@ def consensus_validate_signatures(
     :param consensus: Consensus to validate.
     :param key_certificates: list of certificates against the signatures of certificate needs to be
         validated.
+
     :return: True if the certificate is valid, False otherwise
     """
     # pylint: disable=no-member
@@ -476,6 +488,7 @@ def extract_mtbf(router: Optional[RouterStatusEntryMicroV3]) -> int:
     Extract the mean time before failure (MTBF) from the entries parsed by Stem.
 
     :param router: router from which we want the measured MTBF
+
     :return: the MTBF of the router or 0 it it can not be retrieved
     """
     if not router:
@@ -504,6 +517,7 @@ def select_potential_routers(
 
     :param consensus: original consensus from which we select routers
     :param mtbf_vote: vote of an authority publishing MTBF values
+
     :return: a tuple containing potential guards, middle and exit routers
     """
     potential_guards: List[RouterStatusEntryMicroV3] = list()
@@ -545,7 +559,9 @@ def select_routers(
     :param consensus: the consensus containing routers descriptions
     :param mtbf_vote: vote of an authority publishing MTBF values
     :param n_routers: the final number of routers that we would like
+
     :raises ValueError: One of the parameter given in argument has an invalid value.
+
     :return: list of router entries matching the criteria of the selection
     """
 
@@ -635,6 +651,7 @@ def sign_consensus(
     :param authority_signing_key: signing key of the authority to sign the consensus
     :param authority_certificate: certificate of the authority used to generate the signature's
         metadata
+
     :return: raw signed consensus
     """
 
@@ -705,6 +722,7 @@ def generate_signed_consensus(
     :param authority_ports: OR port and DIR port of the authority
     :param authority_contact: contact info of the authority
     :param consensus_validity_days: lifetime of the consensus in days
+
     :return: signed consensus with a subset of the routers
     """
 
@@ -769,6 +787,7 @@ def generate_microdescriptors(microdescriptors: List[Microdescriptor]) -> bytes:
     Generate microdescriptors document.
 
     :param microdescriptors: list of microdescriptors that need to be present in the file
+
     :return: bytes representation of the microdescriptors
     """
     return b"".join(m.get_bytes() for m in microdescriptors)
@@ -783,6 +802,7 @@ def compute_churn(
 
     :param consensus_customized: customized consensus produced with this script
     :param consensus_latest: a newer consensus to compare the churn
+
     :return: list of fingerprints of routers no longer working
     """
     churn = list()
@@ -816,6 +836,7 @@ def validate_churn_threshold(
 
     :param churn: current churn
     :param consensus_customized: customized consensus generated with this script
+
     :raises: ChurnAboveThreshold if there are too many churned relays.
     """
     threshold = floor(len(consensus_customized.routers) * CHURN_THRESHOLD_RATIO)

@@ -26,6 +26,7 @@ jobs:
       - name: Lint Python code with Flake8
         run: |
           flake8
+
   test-script:
     runs-on: ubuntu-latest
     strategy:

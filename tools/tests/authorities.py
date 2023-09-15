@@ -1,5 +1,5 @@
 AUTHORITIES = [
-"""dir-key-certificate-version 3
+    """dir-key-certificate-version 3
 dir-address 127.0.0.1:7000
 fingerprint 5A23BA701776C9C1AB1C06E734E92AB3D5350D64
 dir-key-published 2020-08-07 12:40:25
@@ -46,7 +46,7 @@ Wkei7KASZzIVe5YcgRHzts/oBt8w59DIaGUtEPQQ2BEIYtkl4N3mfR9VgW5HpTUI
 2kPs1DjukQslB6Ilz6G+qOaZtJyOhdkWtwdR/fMcDWmTEifLZDbAdiLUpg/xc26p
 -----END SIGNATURE-----
 """,
-"""dir-key-certificate-version 3
+    """dir-key-certificate-version 3
 dir-address 127.0.0.1:7002
 fingerprint 7C47DCB4A90E2C2B7C7AD27BD641D038CF5D7EBE
 dir-key-published 2020-08-07 12:40:26
@@ -93,7 +93,7 @@ KKhfO7fLMdGUs/yhXvqVgaQdguOcLfTUU7rV8aZjKsGiDPsFJKTBw9Xt5obGGJN4
 llMKUqZjbySFnSHEMvs+rhPOiUPNzXDl7/hQAVbWrzIyjjJ0WpoIUyHcIETWsv6Y
 -----END SIGNATURE-----
 """,
-"""dir-key-certificate-version 3
+    """dir-key-certificate-version 3
 dir-address 127.0.0.1:7001
 fingerprint 5696AB38CB3852AFA476A5C07B2D4788963D5567
 dir-key-published 2020-08-07 12:40:25
@@ -139,4 +139,5 @@ h7VALUNE80QNDLb4rXiIUE+EI3tCqo9mQ/tnCVVofM6sQyTFjTWyIIRBABnaODlO
 meOIIEIR6ht2qSseZDe4dme7cg5/misTnIv7BNbErpYO5r9C2yHHFqSe8sivExCo
 tEkNtxufKS2mn6Tkm7wcJfp1Temxk/INUtvPA6Dlf3wNTnwzuGfk7LWCQ9BPeFqv
 -----END SIGNATURE-----
-"""]
+""",
+]

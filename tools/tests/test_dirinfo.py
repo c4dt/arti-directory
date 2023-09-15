@@ -15,7 +15,6 @@ from stem.descriptor.networkstatus import (
     NetworkStatusDocumentV3,
 )
 from stem.directory import Authority
-from stem.exit_policy import MicroExitPolicy
 
 from gen_fresh_dirinfo import (
     AUTHORITY_MTBF_MEASURE,
@@ -31,25 +30,25 @@ from gen_fresh_dirinfo import (
     fetch_vote,
     is_orport_used,
     generate_signed_consensus,
-    select_routers
+    select_routers,
 )
 
 from authorities import AUTHORITIES
 
 
 # Small valid consensus taken from Arti.
-PATH_CONSENSUS_OK = Path("test-data")/"consensus-ok.txt"
+PATH_CONSENSUS_OK = Path("test-data") / "consensus-ok.txt"
 
 # Same consensus with 1 invalid signature
-PATH_CONSENSUS_1ERR = Path("test-data")/"consensus-1err.txt"
+PATH_CONSENSUS_1ERR = Path("test-data") / "consensus-1err.txt"
 
 # Same consensus with 2 invalid signature
-PATH_CONSENSUS_2ERR = Path("test-data")/"consensus-2err.txt"
+PATH_CONSENSUS_2ERR = Path("test-data") / "consensus-2err.txt"
 
-PATH_CONSENSUS_CUSTOM = Path("test-data")/"consensus-custom.txt"
+PATH_CONSENSUS_CUSTOM = Path("test-data") / "consensus-custom.txt"
 
-PATH_AUTH_CERTIFICATE = Path("test-data")/"authority_certificate"
-PATH_AUTH_SIGNING_KEY = Path("test-data")/"authority_signing_key"
+PATH_AUTH_CERTIFICATE = Path("test-data") / "authority_certificate"
+PATH_AUTH_SIGNING_KEY = Path("test-data") / "authority_signing_key"
 
 AUTH_CERTIFICATES = [KeyCertificate(cert) for cert in AUTHORITIES]
 
@@ -123,8 +122,6 @@ def test_signature_validation_succeed():
     assert res
 
 
-
-
 def test_signature_validation_fails():
     """
     Test that the signature validation fails when it should fail.
@@ -171,7 +168,7 @@ def test_generate_signed_consensus():
         80,
         443,
         "bar",
-        7
+        7,
     )
 
     signed_consensus = NetworkStatusDocumentV3(signed_consensus_raw)
@@ -188,7 +185,6 @@ def test_generate_signed_consensus():
         assert router_a.microdescriptor_digest == router_b.microdescriptor_digest
 
 
-
 def test_fetch_authorities(authorities):
     """
     Test fetching directory authorities information.
@@ -199,7 +195,6 @@ def test_fetch_authorities(authorities):
         assert isinstance(auth, Authority)
 
 
-
 def test_fetch_certificates(certificates):
     """
     Test fetching certificates of directory authorities works.
@@ -208,7 +203,6 @@ def test_fetch_certificates(certificates):
 
     for cert in certificates:
         assert isinstance(cert, KeyCertificate)
-
 
 
 def test_fetch_microdescriptors(consensus):
@@ -235,7 +229,6 @@ def test_fetch_microdescriptors(consensus):
     assert digests_a == digests_b
 
 
-
 def test_select_routers(consensus, vote):
     """
     Test that router selection works correctly.
@@ -260,8 +253,6 @@ def test_select_routers(consensus, vote):
 
 
 def test_generate_signed_consensus_from_real_data(consensus, vote):
-    """
-    """
 
     with PATH_AUTH_SIGNING_KEY.open("rb") as signing_key_fd:
         signing_key_raw = signing_key_fd.read()
@@ -286,7 +277,7 @@ def test_generate_signed_consensus_from_real_data(consensus, vote):
         80,
         443,
         "bar",
-        7
+        7,
     )
 
     signed_consensus = NetworkStatusDocumentV3(signed_consensus_raw)
@@ -304,5 +295,3 @@ def test_generate_signed_consensus_from_real_data(consensus, vote):
 
         if FLAG_EXIT in router.flags:
             assert FLAG_GUARD not in router.flags
-
-

@@ -6,6 +6,7 @@ from random import Random
 from pathlib import Path
 
 import pytest
+import json
 
 from Crypto.PublicKey import RSA
 from stem.descriptor.microdescriptor import Microdescriptor
@@ -33,9 +34,6 @@ from gen_fresh_dirinfo import (
     select_routers,
 )
 
-from authorities import AUTHORITIES
-
-
 # Small valid consensus taken from Arti.
 PATH_CONSENSUS_OK = Path("test-data") / "consensus-ok.txt"
 
@@ -50,6 +48,7 @@ PATH_CONSENSUS_CUSTOM = Path("test-data") / "consensus-custom.txt"
 PATH_AUTH_CERTIFICATE = Path("test-data") / "authority_certificate"
 PATH_AUTH_SIGNING_KEY = Path("test-data") / "authority_signing_key"
 
+AUTHORITIES = json.load((Path("test-data") / "authorities.json").open())
 AUTH_CERTIFICATES = [KeyCertificate(cert) for cert in AUTHORITIES]
 
 

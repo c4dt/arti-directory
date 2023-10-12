@@ -940,18 +940,15 @@ def generate_customized_consensus(
 
     # Read the relevant input files related to the authority.
 
-    authority_signing_key_raw = authority_signing_key_path.read_bytes()
+    authority_signing_key = RSA.import_key(authority_signing_key_path.read_bytes())
 
-    authority_signing_key = RSA.import_key(authority_signing_key_raw)
-
-    authority_certificate_raw = authority_certificate_path.read_bytes()
-
-    authority_certificate = KeyCertificate(authority_certificate_raw)
+    authority_certificate = KeyCertificate(authority_certificate_path.read_bytes())
 
     consensus_original = fetch_latest_consensus()
 
-    v3idents = [auth.v3ident for auth in consensus_original.directory_authorities]
-    key_certificates = fetch_certificates(v3idents)
+    key_certificates = fetch_certificates(
+        [auth.v3ident for auth in consensus_original.directory_authorities]
+    )
 
     # The validation provided by Stem does not works for microdescriptor
     # consensus with the tested version (1.8.0).
@@ -962,12 +959,12 @@ def generate_customized_consensus(
     auth_mtbf = authorities[AUTHORITY_MTBF_MEASURE]
     vote_mtbf = fetch_vote(auth_mtbf)
 
-    key_cert_mtbf = list(
-        filter(lambda c: c.fingerprint == auth_mtbf.v3ident, key_certificates)
-    )
-
     try:
-        vote_mtbf.validate_signatures(key_cert_mtbf)
+        vote_mtbf.validate_signatures(
+            list(
+                filter(lambda c: c.fingerprint == auth_mtbf.v3ident, key_certificates)
+            )
+        )
     except ValueError as err:
         raise InvalidVote(str(err))
 
@@ -991,17 +988,17 @@ def generate_customized_consensus(
         consensus_validity_days,
     )
 
-    our_consensus = NetworkStatusDocumentV3(consensus)
-    if not consensus_validate_signatures(our_consensus, [authority_certificate]):
+    if not consensus_validate_signatures(
+            NetworkStatusDocumentV3(consensus),
+            [authority_certificate],
+    ):
         raise InvalidConsensus("generated concensus has an invalid signature.")
-
-    microdescriptors = fetch_microdescriptors(routers)
-
-    microdescriptors_raw = generate_microdescriptors(microdescriptors)
 
     consensus_path.write_bytes(consensus)
 
-    microdescriptors_path.write_bytes(microdescriptors_raw)
+    microdescriptors_path.write_bytes(
+        generate_microdescriptors(fetch_microdescriptors(routers))
+    )
 
 
 def generate_churninfo(
@@ -1053,32 +1050,19 @@ def generate_customized_consensus_cb(namespace: Namespace) -> None:
 
     :param namespace: namespace containing parsed arguments.
     """
-    authority_signing_key_path: Path = namespace.authority_signing_key
-    authority_certificate_path: Path = namespace.authority_certificate
-    consensus_path: Path = namespace.consensus
-    microdescriptors_path: Path = namespace.microdescriptors
-    number_routers: int = namespace.number_routers
-    authority_name: str = namespace.authority_name
-    authority_hostname: str = namespace.authority_hostname
-    authority_ip_address: str = namespace.authority_ip_address
-    authority_dirport: int = namespace.authority_dirport
-    authority_orport: int = namespace.authority_orport
-    authority_contact: str = namespace.authority_contact
-    consensus_validity_days: int = namespace.consensus_validity_days
-
     generate_customized_consensus(
-        authority_signing_key_path,
-        authority_certificate_path,
-        consensus_path,
-        microdescriptors_path,
-        number_routers,
-        authority_name,
-        authority_hostname,
-        authority_ip_address,
-        authority_dirport,
-        authority_orport,
-        authority_contact,
-        consensus_validity_days,
+        namespace.authority_signing_key,
+        namespace.authority_certificate,
+        namespace.consensus,
+        namespace.microdescriptors,
+        namespace.number_routers,
+        namespace.authority_name,
+        namespace.authority_hostname,
+        namespace.authority_ip_address,
+        namespace.authority_dirport,
+        namespace.authority_orport,
+        namespace.authority_contact,
+        namespace.consensus_validity_days,
     )
 
 

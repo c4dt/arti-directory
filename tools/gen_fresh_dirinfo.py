@@ -161,6 +161,12 @@ class ChurnAboveThreshold(Exception):
     """
 
 
+class InvalidNumberRouters(Exception):
+    """
+    Less than the asked for number of routers could be successfully retrieved.
+    """
+
+
 def setup_logger() -> logging.Logger:
     """
     Setup the logger.
@@ -359,6 +365,7 @@ def fetch_latest_consensus() -> NetworkStatusDocumentV3:
 
 def fetch_microdescriptors(
     routers: List[RouterStatusEntryMicroV3],
+    force: bool = False,
 ) -> List[Microdescriptor]:
     """
     Fetch the microdescriptors described in the entries.
@@ -382,14 +389,19 @@ def fetch_microdescriptors(
         ).run()
 
         digests_set = set(digests)
-        for microdescriptor in microdescriptors_bucket:
+        for microdescriptor in list(microdescriptors_bucket):
             if not isinstance(microdescriptor, Microdescriptor):
                 raise ValueError(
                     f"Unexpected microdescriptor format {type(microdescriptor)}"
                 )
 
             if microdescriptor.digest() not in digests_set:
-                raise ValueError("Unexpected microdescriptor retrieved.")
+                if not force:
+                    raise ValueError("Unexpected microdescriptor retrieved.")
+                LOGGER.warning(
+                    f"skip microdescriptor '{microdescriptor.digest()}': unknown microdescriptor"  # noqa: E501
+                )
+                microdescriptors_bucket.remove(microdescriptor)
 
         microdescriptors += microdescriptors_bucket
 
@@ -916,6 +928,7 @@ def generate_customized_consensus(
     authority_orport: int,
     authority_contact: str,
     consensus_validity_days: int,
+    force: bool = False,
 ) -> None:
     """
     Generate a customized consensus from data retrieved from the Tor network
@@ -934,8 +947,11 @@ def generate_customized_consensus(
     :param authority_orport: directory authority's ORPort
     :param authority_contact: directory authorty's contact
     :param consensus_validity_days: number of days consensus should be valid
+    :param force: continue even if less than number_routers could be retrieved
 
     :raises: InvalidConsensus if signature validation failed
+    :raises: InvalidNumberRouters if less than number_routers could be retrieved and
+        force is False
     """
 
     # Read the relevant input files related to the authority.
@@ -973,6 +989,22 @@ def generate_customized_consensus(
         vote_mtbf,
         number_routers,
     )
+    microdescriptors = fetch_microdescriptors(routers, force=force)
+    microdescriptor_hashes = [
+        microdescriptor.digest() for microdescriptor in microdescriptors
+    ]
+    for router in list(routers):
+        if router.microdescriptor_digest not in microdescriptor_hashes:
+            LOGGER.warning(
+                f"skip router '{router.nickname}' ({router.fingerprint}): failed to retrieve microdescriptor"   # noqa: E501
+            )
+            routers.remove(router)
+    if len(routers) < number_routers:
+        msg = f"only {len(routers)}/{number_routers} successfully retrieved"
+        if not force:
+            LOGGER.error(msg)
+            raise InvalidNumberRouters(msg)
+        LOGGER.warning(msg)
 
     consensus = generate_signed_consensus(
         consensus_original,
@@ -997,7 +1029,7 @@ def generate_customized_consensus(
     consensus_path.write_bytes(consensus)
 
     microdescriptors_path.write_bytes(
-        generate_microdescriptors(fetch_microdescriptors(routers))
+        generate_microdescriptors(microdescriptors)
     )
 
 
@@ -1063,6 +1095,7 @@ def generate_customized_consensus_cb(namespace: Namespace) -> None:
         namespace.authority_orport,
         namespace.authority_contact,
         namespace.consensus_validity_days,
+        force=namespace.force,
     )
 
 
@@ -1222,6 +1255,12 @@ def main(program: str, arguments: List[str]) -> None:
         help="Number of routers to select from the consensus.",
         type=int,
         default=120,
+    )
+    parser_dirinfo.add_argument(
+        "-f",
+        "--force",
+        help="Continue even if less routers than number-routers could be retrieved.",
+        action="store_true",
     )
 
     parser_dirinfo.set_defaults(callback=generate_customized_consensus_cb)

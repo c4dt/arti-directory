@@ -96,7 +96,7 @@ def test_fetch_consensus(consensus):
     """
     assert isinstance(consensus, NetworkStatusDocumentV3)
 
-
+@pytest.mark.xfail(reason="outdated test data")
 def test_signature_validation_succeed():
     """
     Test that the signature validation succeeds when it should succeed.

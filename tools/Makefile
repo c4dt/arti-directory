@@ -45,7 +45,8 @@ $(CACHE_CERT) $(CACHE_AUTH) $(CACHE_CONS) $(CACHE_MICRO):
 		--authority-certificate $(CACHE_CERT) \
 		--consensus $(CACHE_CONS) \
 		--microdescriptors $(CACHE_MICRO) \
-		--ignore
+		--ignore \
+		-n 122
 
 churn: cache
 	. $(VENV)/bin/activate && ./gen_fresh_dirinfo.py compute-churn \

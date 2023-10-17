@@ -365,13 +365,14 @@ def fetch_latest_consensus() -> NetworkStatusDocumentV3:
 
 def fetch_microdescriptors(
     routers: List[RouterStatusEntryMicroV3],
-    force: bool = False,
+    ignore: bool = False,
 ) -> List[Microdescriptor]:
     """
     Fetch the microdescriptors described in the entries.
 
     :param routers: list of routers status found in the consensus for which we want the
         microdescriptors
+    :param ignore: skip invalid microdescriptors
 
     :raises ValueError: Did not retrieve the expected microdescriptor format.
 
@@ -396,7 +397,7 @@ def fetch_microdescriptors(
                 )
 
             if microdescriptor.digest() not in digests_set:
-                if not force:
+                if not ignore:
                     raise ValueError("Unexpected microdescriptor retrieved.")
                 LOGGER.warning(
                     f"skip microdescriptor '{microdescriptor.digest()}': unknown microdescriptor"  # noqa: E501
@@ -928,7 +929,7 @@ def generate_customized_consensus(
     authority_orport: int,
     authority_contact: str,
     consensus_validity_days: int,
-    force: bool = False,
+    ignore: bool = False,
 ) -> None:
     """
     Generate a customized consensus from data retrieved from the Tor network
@@ -947,11 +948,11 @@ def generate_customized_consensus(
     :param authority_orport: directory authority's ORPort
     :param authority_contact: directory authorty's contact
     :param consensus_validity_days: number of days consensus should be valid
-    :param force: continue even if less than number_routers could be retrieved
+    :param ignore: continue even if less than number_routers could be retrieved
 
     :raises: InvalidConsensus if signature validation failed
     :raises: InvalidNumberRouters if less than number_routers could be retrieved and
-        force is False
+        ignore is False
     """
 
     # Read the relevant input files related to the authority.
@@ -989,7 +990,7 @@ def generate_customized_consensus(
         vote_mtbf,
         number_routers,
     )
-    microdescriptors = fetch_microdescriptors(routers, force=force)
+    microdescriptors = fetch_microdescriptors(routers, ignore=ignore)
     microdescriptor_hashes = [
         microdescriptor.digest() for microdescriptor in microdescriptors
     ]
@@ -1001,7 +1002,7 @@ def generate_customized_consensus(
             routers.remove(router)
     if len(routers) < number_routers:
         msg = f"only {len(routers)}/{number_routers} successfully retrieved"
-        if not force:
+        if not ignore:
             LOGGER.error(msg)
             raise InvalidNumberRouters(msg)
         LOGGER.warning(msg)
@@ -1095,7 +1096,7 @@ def generate_customized_consensus_cb(namespace: Namespace) -> None:
         namespace.authority_orport,
         namespace.authority_contact,
         namespace.consensus_validity_days,
-        force=namespace.force,
+        ignore=namespace.ignore,
     )
 
 
@@ -1257,8 +1258,8 @@ def main(program: str, arguments: List[str]) -> None:
         default=120,
     )
     parser_dirinfo.add_argument(
-        "-f",
-        "--force",
+        "-i",
+        "--ignore",
         help="Continue even if less routers than number-routers could be retrieved.",
         action="store_true",
     )

@@ -978,9 +978,7 @@ def generate_customized_consensus(
 
     try:
         vote_mtbf.validate_signatures(
-            list(
-                filter(lambda c: c.fingerprint == auth_mtbf.v3ident, key_certificates)
-            )
+            list(filter(lambda c: c.fingerprint == auth_mtbf.v3ident, key_certificates))
         )
     except ValueError as err:
         raise InvalidVote(str(err))
@@ -997,7 +995,7 @@ def generate_customized_consensus(
     for router in list(routers):
         if router.microdescriptor_digest not in microdescriptor_hashes:
             LOGGER.warning(
-                f"skip router '{router.nickname}' ({router.fingerprint}): failed to retrieve microdescriptor"   # noqa: E501
+                f"skip router '{router.nickname}' ({router.fingerprint}): failed to retrieve microdescriptor"  # noqa: E501
             )
             routers.remove(router)
     if len(routers) < number_routers:
@@ -1022,16 +1020,14 @@ def generate_customized_consensus(
     )
 
     if not consensus_validate_signatures(
-            NetworkStatusDocumentV3(consensus),
-            [authority_certificate],
+        NetworkStatusDocumentV3(consensus),
+        [authority_certificate],
     ):
         raise InvalidConsensus("generated concensus has an invalid signature.")
 
     consensus_path.write_bytes(consensus)
 
-    microdescriptors_path.write_bytes(
-        generate_microdescriptors(microdescriptors)
-    )
+    microdescriptors_path.write_bytes(generate_microdescriptors(microdescriptors))
 
 
 def generate_churninfo(

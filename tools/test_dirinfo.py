@@ -96,6 +96,7 @@ def test_fetch_consensus(consensus):
     """
     assert isinstance(consensus, NetworkStatusDocumentV3)
 
+
 @pytest.mark.xfail(reason="outdated test data")
 def test_signature_validation_succeed():
     """
@@ -252,7 +253,6 @@ def test_select_routers(consensus, vote):
 
 
 def test_generate_signed_consensus_from_real_data(consensus, vote):
-
     with PATH_AUTH_SIGNING_KEY.open("rb") as signing_key_fd:
         signing_key_raw = signing_key_fd.read()
 

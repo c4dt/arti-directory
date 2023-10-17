@@ -27,7 +27,6 @@ from hashlib import (
 )
 from heapq import nlargest
 from math import ceil, floor
-from itertools import zip_longest
 from os import environ
 from pathlib import Path
 from subprocess import (
@@ -158,6 +157,12 @@ class TorCertGenFailed(Exception):
 class ChurnAboveThreshold(Exception):
     """
     The number of churned routers is above the threshold.
+    """
+
+
+class InvalidNumberRouters(Exception):
+    """
+    Less than the asked for number of routers could be successfully retrieved.
     """
 
 
@@ -357,14 +362,30 @@ def fetch_latest_consensus() -> NetworkStatusDocumentV3:
     return consensus
 
 
+# replace w/ itertools.batched in Python 3.12
+def batched(iterable: List[str], n: int):
+    """Break up list of strings into batches of size n.
+
+
+    :param iterable: list of strings
+    :param n: size
+    """
+    for i in range(0, len(iterable) - n, n):
+        yield iterable[i : i + n]
+    if len(iterable) % n:
+        yield iterable[(len(iterable) // n) * n :]
+
+
 def fetch_microdescriptors(
     routers: List[RouterStatusEntryMicroV3],
+    ignore: bool = False,
 ) -> List[Microdescriptor]:
     """
     Fetch the microdescriptors described in the entries.
 
     :param routers: list of routers status found in the consensus for which we want the
         microdescriptors
+    :param ignore: skip invalid microdescriptors
 
     :raises ValueError: Did not retrieve the expected microdescriptor format.
 
@@ -372,24 +393,34 @@ def fetch_microdescriptors(
     """
     downloader = DescriptorDownloader()
     microdescriptors: List[Microdescriptor] = list()
-    buckets = [
-        iter(r.microdescriptor_digest for r in routers)
-    ] * MAX_MICRODESCRIPTOR_HASHES
-    for bucket in zip_longest(*buckets):
+    buckets = list(
+        batched(
+            [router.microdescriptor_digest for router in routers],
+            MAX_MICRODESCRIPTOR_HASHES,
+        )
+    )
+    for bucket in buckets:
         digests = [h for h in bucket if h is not None]
+        LOGGER.info(f"attempting to retrieve {len(digests)} microdescriptors")
         microdescriptors_bucket = downloader.get_microdescriptors(
             hashes=digests, validate=True
         ).run()
 
         digests_set = set(digests)
-        for microdescriptor in microdescriptors_bucket:
+        LOGGER.info(f"retrieved {len(list(microdescriptors_bucket))} microdescriptors")
+        for microdescriptor in list(microdescriptors_bucket):
             if not isinstance(microdescriptor, Microdescriptor):
                 raise ValueError(
                     f"Unexpected microdescriptor format {type(microdescriptor)}"
                 )
 
             if microdescriptor.digest() not in digests_set:
-                raise ValueError("Unexpected microdescriptor retrieved.")
+                if not ignore:
+                    raise ValueError("Unexpected microdescriptor retrieved.")
+                LOGGER.warning(
+                    f"skip microdescriptor '{microdescriptor.digest()}': unknown microdescriptor"  # noqa: E501
+                )
+                microdescriptors_bucket.remove(microdescriptor)
 
         microdescriptors += microdescriptors_bucket
 
@@ -916,6 +947,7 @@ def generate_customized_consensus(
     authority_orport: int,
     authority_contact: str,
     consensus_validity_days: int,
+    ignore: bool = False,
 ) -> None:
     """
     Generate a customized consensus from data retrieved from the Tor network
@@ -934,24 +966,24 @@ def generate_customized_consensus(
     :param authority_orport: directory authority's ORPort
     :param authority_contact: directory authorty's contact
     :param consensus_validity_days: number of days consensus should be valid
+    :param ignore: continue even if less than number_routers could be retrieved
 
     :raises: InvalidConsensus if signature validation failed
+    :raises: InvalidNumberRouters if less than number_routers could be retrieved and
+        ignore is False
     """
 
     # Read the relevant input files related to the authority.
 
-    authority_signing_key_raw = authority_signing_key_path.read_bytes()
+    authority_signing_key = RSA.import_key(authority_signing_key_path.read_bytes())
 
-    authority_signing_key = RSA.import_key(authority_signing_key_raw)
-
-    authority_certificate_raw = authority_certificate_path.read_bytes()
-
-    authority_certificate = KeyCertificate(authority_certificate_raw)
+    authority_certificate = KeyCertificate(authority_certificate_path.read_bytes())
 
     consensus_original = fetch_latest_consensus()
 
-    v3idents = [auth.v3ident for auth in consensus_original.directory_authorities]
-    key_certificates = fetch_certificates(v3idents)
+    key_certificates = fetch_certificates(
+        [auth.v3ident for auth in consensus_original.directory_authorities]
+    )
 
     # The validation provided by Stem does not works for microdescriptor
     # consensus with the tested version (1.8.0).
@@ -962,12 +994,10 @@ def generate_customized_consensus(
     auth_mtbf = authorities[AUTHORITY_MTBF_MEASURE]
     vote_mtbf = fetch_vote(auth_mtbf)
 
-    key_cert_mtbf = list(
-        filter(lambda c: c.fingerprint == auth_mtbf.v3ident, key_certificates)
-    )
-
     try:
-        vote_mtbf.validate_signatures(key_cert_mtbf)
+        vote_mtbf.validate_signatures(
+            list(filter(lambda c: c.fingerprint == auth_mtbf.v3ident, key_certificates))
+        )
     except ValueError as err:
         raise InvalidVote(str(err))
 
@@ -976,6 +1006,22 @@ def generate_customized_consensus(
         vote_mtbf,
         number_routers,
     )
+    microdescriptors = fetch_microdescriptors(routers, ignore=ignore)
+    microdescriptor_hashes = [
+        microdescriptor.digest() for microdescriptor in microdescriptors
+    ]
+    for router in list(routers):
+        if router.microdescriptor_digest not in microdescriptor_hashes:
+            LOGGER.warning(
+                f"skip router '{router.nickname}' ({router.fingerprint}): failed to retrieve microdescriptor"  # noqa: E501
+            )
+            routers.remove(router)
+    if len(routers) < number_routers:
+        msg = f"only {len(routers)}/{number_routers} successfully retrieved"
+        if not ignore:
+            LOGGER.error(msg)
+            raise InvalidNumberRouters(msg)
+        LOGGER.warning(msg)
 
     consensus = generate_signed_consensus(
         consensus_original,
@@ -991,17 +1037,15 @@ def generate_customized_consensus(
         consensus_validity_days,
     )
 
-    our_consensus = NetworkStatusDocumentV3(consensus)
-    if not consensus_validate_signatures(our_consensus, [authority_certificate]):
+    if not consensus_validate_signatures(
+        NetworkStatusDocumentV3(consensus),
+        [authority_certificate],
+    ):
         raise InvalidConsensus("generated concensus has an invalid signature.")
-
-    microdescriptors = fetch_microdescriptors(routers)
-
-    microdescriptors_raw = generate_microdescriptors(microdescriptors)
 
     consensus_path.write_bytes(consensus)
 
-    microdescriptors_path.write_bytes(microdescriptors_raw)
+    microdescriptors_path.write_bytes(generate_microdescriptors(microdescriptors))
 
 
 def generate_churninfo(
@@ -1053,32 +1097,20 @@ def generate_customized_consensus_cb(namespace: Namespace) -> None:
 
     :param namespace: namespace containing parsed arguments.
     """
-    authority_signing_key_path: Path = namespace.authority_signing_key
-    authority_certificate_path: Path = namespace.authority_certificate
-    consensus_path: Path = namespace.consensus
-    microdescriptors_path: Path = namespace.microdescriptors
-    number_routers: int = namespace.number_routers
-    authority_name: str = namespace.authority_name
-    authority_hostname: str = namespace.authority_hostname
-    authority_ip_address: str = namespace.authority_ip_address
-    authority_dirport: int = namespace.authority_dirport
-    authority_orport: int = namespace.authority_orport
-    authority_contact: str = namespace.authority_contact
-    consensus_validity_days: int = namespace.consensus_validity_days
-
     generate_customized_consensus(
-        authority_signing_key_path,
-        authority_certificate_path,
-        consensus_path,
-        microdescriptors_path,
-        number_routers,
-        authority_name,
-        authority_hostname,
-        authority_ip_address,
-        authority_dirport,
-        authority_orport,
-        authority_contact,
-        consensus_validity_days,
+        namespace.authority_signing_key,
+        namespace.authority_certificate,
+        namespace.consensus,
+        namespace.microdescriptors,
+        namespace.number_routers,
+        namespace.authority_name,
+        namespace.authority_hostname,
+        namespace.authority_ip_address,
+        namespace.authority_dirport,
+        namespace.authority_orport,
+        namespace.authority_contact,
+        namespace.consensus_validity_days,
+        ignore=namespace.ignore,
     )
 
 
@@ -1238,6 +1270,12 @@ def main(program: str, arguments: List[str]) -> None:
         help="Number of routers to select from the consensus.",
         type=int,
         default=120,
+    )
+    parser_dirinfo.add_argument(
+        "-i",
+        "--ignore",
+        help="Continue even if less routers than number-routers could be retrieved.",
+        action="store_true",
     )
 
     parser_dirinfo.set_defaults(callback=generate_customized_consensus_cb)

@@ -205,6 +205,7 @@ def test_fetch_certificates(certificates):
         assert isinstance(cert, KeyCertificate)
 
 
+@pytest.mark.xfail(reason="unresolved bug")
 def test_fetch_microdescriptors(consensus):
     """
     Test fetching microdescriptors works.

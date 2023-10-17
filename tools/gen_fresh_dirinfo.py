@@ -27,7 +27,6 @@ from hashlib import (
 )
 from heapq import nlargest
 from math import ceil, floor
-from itertools import zip_longest
 from os import environ
 from pathlib import Path
 from subprocess import (
@@ -363,6 +362,20 @@ def fetch_latest_consensus() -> NetworkStatusDocumentV3:
     return consensus
 
 
+# replace w/ itertools.batched in Python 3.12
+def batched(iterable: List[str], n: int):
+    """Break up list of strings into batches of size n.
+
+
+    :param iterable: list of strings
+    :param n: size
+    """
+    for i in range(0, len(iterable) - n, n):
+        yield iterable[i : i + n]
+    if len(iterable) % n:
+        yield iterable[(len(iterable) // n) * n :]
+
+
 def fetch_microdescriptors(
     routers: List[RouterStatusEntryMicroV3],
     ignore: bool = False,
@@ -380,16 +393,21 @@ def fetch_microdescriptors(
     """
     downloader = DescriptorDownloader()
     microdescriptors: List[Microdescriptor] = list()
-    buckets = [
-        iter(r.microdescriptor_digest for r in routers)
-    ] * MAX_MICRODESCRIPTOR_HASHES
-    for bucket in zip_longest(*buckets):
+    buckets = list(
+        batched(
+            [router.microdescriptor_digest for router in routers],
+            MAX_MICRODESCRIPTOR_HASHES,
+        )
+    )
+    for bucket in buckets:
         digests = [h for h in bucket if h is not None]
+        LOGGER.info(f"attempting to retrieve {len(digests)} microdescriptors")
         microdescriptors_bucket = downloader.get_microdescriptors(
             hashes=digests, validate=True
         ).run()
 
         digests_set = set(digests)
+        LOGGER.info(f"retrieved {len(list(microdescriptors_bucket))} microdescriptors")
         for microdescriptor in list(microdescriptors_bucket):
             if not isinstance(microdescriptor, Microdescriptor):
                 raise ValueError(

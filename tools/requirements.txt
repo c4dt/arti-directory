@@ -1,4 +1,4 @@
 cryptography<37
-pycryptodome==3.19.0
+pycryptodome==3.19.1
 pytest
 git+https://github.com/c4dt/stem.git

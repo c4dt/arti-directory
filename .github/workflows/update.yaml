@@ -1,8 +1,9 @@
 name: Update
 
 on:
-  schedule:
-    - cron: '30 2 * * *'
+# Archived - no automatic scheduling anymore
+#  schedule:
+#    - cron: '30 2 * * *'
   workflow_dispatch:
 
 jobs:

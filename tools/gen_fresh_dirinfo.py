@@ -644,9 +644,9 @@ def select_routers(
     guards = nlargest(
         number_guards,
         potential_guards,
-        key=lambda r: mtbf_cache.get(r.fingerprint, 0)
-        if r.fingerprint not in selected_set
-        else 0,
+        key=lambda r: (
+            mtbf_cache.get(r.fingerprint, 0) if r.fingerprint not in selected_set else 0
+        ),
     )
 
     for router in guards:
@@ -656,9 +656,9 @@ def select_routers(
     middles = nlargest(
         number_middles,
         potential_middles,
-        key=lambda r: mtbf_cache.get(r.fingerprint, 0)
-        if r.fingerprint not in selected_set
-        else 0,
+        key=lambda r: (
+            mtbf_cache.get(r.fingerprint, 0) if r.fingerprint not in selected_set else 0
+        ),
     )
 
     # We remove exit flags from routers not selected as potential exit relay.
